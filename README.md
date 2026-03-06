@@ -391,4 +391,4 @@ ini_set('error_log', __DIR__ . '/php_errors.log');
 
 ## License
 
-See main repository for license information.
+MIT License - see LICENSE file
