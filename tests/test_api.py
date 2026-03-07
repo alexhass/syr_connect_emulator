@@ -205,7 +205,7 @@ class SyrEmulatorTest:
             print("\n" + "=" * 60)
             print("✓ All tests completed successfully!")
             print("=" * 60)
-            print("\nCheck emulator/set_operations.log for detailed logs")
+            print("\nCheck ../set_operations.log for detailed logs")
 
         except Exception as e:
             print(f"\n✗ Test failed with error: {e}")
