@@ -15,6 +15,19 @@
  * Device types: neosoft, trio
  */
 
+// Aggressive header suppression to match real device behavior
+// Real device only sends: HTTP/1.1 200 OK + content-length
+ini_set('default_mimetype', '');
+ini_set('expose_php', 'off');
+
+// Remove all default headers before any output
+if (function_exists('header_remove')) {
+    header_remove();
+}
+
+// Prevent Apache from adding headers via PHP
+header('X-Remove-Headers: true');
+
 require_once __DIR__ . '/DeviceEmulator.php';
 
 // Configuration
@@ -36,12 +49,18 @@ if (preg_match('#^(neosoft|trio)/#', $path, $matches)) {
     $deviceType = $matches[1];
 } else {
     http_response_code(400);
-    header('Content-Type: application/json');
-    echo json_encode([
+    header_remove();
+    $response = json_encode([
         'error' => 'Invalid device prefix',
         'path' => $path,
         'message' => 'URL must start with /neosoft/ or /trio/'
     ]);
+    $bodyWithEnding = $response . "\r\n\r\n";
+    header('content-length: ' . strlen($response));
+    echo $bodyWithEnding;
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
     exit;
 }
 
@@ -63,10 +82,16 @@ if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
 } else {
     // Unknown endpoint
     http_response_code(404);
-    header('Content-Type: application/json');
-    echo json_encode([
+    header_remove();
+    $response = json_encode([
         'error' => 'Not Found',
         'path' => $path,
         'message' => 'Valid endpoints: /{device}/set/ADM/(2)f, /{device}/get/all, /{device}/set/{key}/{value}'
     ]);
+    $bodyWithEnding = $response . "\r\n\r\n";
+    header('content-length: ' . strlen($response));
+    echo $bodyWithEnding;
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
 }

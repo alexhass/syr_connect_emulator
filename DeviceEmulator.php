@@ -67,10 +67,9 @@ class DeviceEmulator
         // Log the login attempt
         $this->logOperation('LOGIN', 'ADM', '(2)f');
         
-        // Return success (empty body or simple acknowledgment)
-        http_response_code(200);
-        header('Content-Type: application/json');
-        echo json_encode(['status' => 'ok']);
+        // Return success - match real device response exactly
+        $response = json_encode(['setADM(2)f' => 'OK']);
+        $this->sendRawResponse($response);
     }
 
     /**
@@ -87,9 +86,8 @@ class DeviceEmulator
             error_log("WARNING: /get/all accessed without prior login");
         }
 
-        http_response_code(200);
-        header('Content-Type: application/json');
-        echo json_encode($this->deviceData, JSON_PRETTY_PRINT);
+        $response = json_encode($this->deviceData, JSON_PRETTY_PRINT);
+        $this->sendRawResponse($response);
     }
 
     /**
@@ -123,15 +121,10 @@ class DeviceEmulator
         // Log the operation
         $this->logOperation('SET', $key, $value, "Changed $getKey from " . json_encode($oldValue) . " to " . json_encode($newValue));
 
-        // Return success
-        http_response_code(200);
-        header('Content-Type: application/json');
-        echo json_encode([
-            'status' => 'ok',
-            'key' => $getKey,
-            'old_value' => $oldValue,
-            'new_value' => $newValue
-        ]);
+        // Return success - match real device response format
+        $setKey = 'set' . $key;
+        $response = json_encode([$setKey => 'OK']);
+        $this->sendRawResponse($response);
     }
 
     /**
@@ -207,11 +200,49 @@ class DeviceEmulator
     private function sendError(int $code, string $message): void
     {
         http_response_code($code);
-        header('Content-Type: application/json');
-        echo json_encode([
+        $response = json_encode([
             'error' => $message,
             'code' => $code,
             'device_type' => $this->deviceType
         ]);
+        $this->sendRawResponse($response);
+    }
+
+    /**
+     * Send raw HTTP response with minimal headers (matching real device)
+     * 
+     * Real device only sends:
+     * - HTTP/1.1 200 OK
+     * - content-length: XX (lowercase!)
+     * - No Content-Type header
+     * - Body ends with \r\n\r\n
+     * 
+     * @param string $body Response body
+     */
+    private function sendRawResponse(string $body): void
+    {
+        // Ensure we're using HTTP/1.1 and 200 OK is already set
+        if (http_response_code() === false) {
+            http_response_code(200);
+        }
+        
+        // Remove ALL default headers
+        header_remove();
+        
+        // Calculate content length and send ONLY content-length header (lowercase)
+        // The body already has \r\n from json_encode, add extra \r\n
+        $bodyWithEnding = $body . "\r\n\r\n";
+        $contentLength = strlen($body);
+        
+        // Send exactly what the real device sends - lowercase header name
+        header('content-length: ' . $contentLength, true);
+        
+        // Output body with proper line endings
+        echo $bodyWithEnding;
+        
+        // Flush output immediately to prevent Apache from modifying headers
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
     }
 }

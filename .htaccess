@@ -14,15 +14,14 @@ RewriteCond %{REQUEST_FILENAME} !-d
 # Supported devices: neosoft, trio
 RewriteRule ^(neosoft|trio)/(.*)$ index.php [QSA,L]
 
-# Enable CORS for testing (remove in production)
-Header set Access-Control-Allow-Origin "*"
-Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
-Header set Access-Control-Allow-Headers "Content-Type"
-
-# Set default content type to JSON
-<FilesMatch "\.(php)$">
-    Header set Content-Type "application/json; charset=utf-8"
-</FilesMatch>
+# Suppress Apache default headers to match real device
+# Real device only sends: HTTP/1.1 200 OK + content-length: XX
+<IfModule mod_headers.c>
+    Header always unset Date
+    Header always unset Server
+    Header always unset X-Powered-By
+    Header always unset Content-Type
+</IfModule>
 
 # Disable directory listing
 Options -Indexes

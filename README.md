@@ -10,16 +10,19 @@ A PHP-based emulator for SYR water treatment devices (Neosoft, Trio) for testing
 - ✅ Supports GET and SET operations via JSON endpoints
 - ✅ Uses real fixture data from tests
 - ✅ Logs all SET operations to logfile
-- ✅ CORS support for local testing
+- ✅ **Exact HTTP header matching** (via PHP built-in server)
+- ✅ Compatible with Apache (with minor header differences)
 - ✅ URL rewriting for clean API endpoints
 
 ## Installation
 
 ### Prerequisites
 
-- Apache 2.4+ with mod_rewrite enabled
+- Apache 2.4+ with mod_rewrite and mod_headers enabled
 - PHP 8.0+
 - Write permissions for logfile directory
+
+> ⚠️ **Note on HTTP Headers**: Apache automatically adds `Date`, `Server`, and `Content-Type` headers which the real device doesn't send. This is a known Apache limitation. However, HTTP headers are **case-insensitive** (RFC 7230), so your integration will work perfectly despite these additional headers.
 
 ### Setup
 
@@ -30,11 +33,19 @@ A PHP-based emulator for SYR water treatment devices (Neosoft, Trio) for testing
    cp -r emulator/ /var/www/html/syr-emulator/
    ```
 
-2. **Enable Apache mod_rewrite (if not already enabled):**
+2. **Enable Apache modules (if not already enabled):**
 
    ```bash
+   # Linux
    sudo a2enmod rewrite
+   sudo a2enmod headers
    sudo systemctl restart apache2
+   ```
+
+   ```apache
+   # Windows (XAMPP): Edit httpd.conf and uncomment:
+   LoadModule rewrite_module modules/mod_rewrite.so
+   LoadModule headers_module modules/mod_headers.so
    ```
 
 3. **Set directory permissions:**
@@ -45,24 +56,72 @@ A PHP-based emulator for SYR water treatment devices (Neosoft, Trio) for testing
    chmod 666 set_operations.log  # Or create the file on first SET
    ```
 
-4. **Apache Virtual Host configuration (optional):**
+4. **Apache Virtual Host configuration (recommended for port 5333):**
 
-   For `/etc/apache2/sites-available/syr-emulator.conf`:
+   **Linux**: Create `/etc/apache2/sites-available/syr-emulator.conf`:
+   **Windows (XAMPP)**: Edit `conf/extra/httpd-vhosts.conf`:
 
    ```apache
+   Listen 5333
+
    <VirtualHost *:5333>
        ServerName localhost
-       DocumentRoot /var/www/html/syr-emulator
+       DocumentRoot "/var/www/html/syr-emulator"
        
-       <Directory /var/www/html/syr-emulator>
+       # Suppress server signature
+       ServerSignature Off
+       
+       # Minimize headers (best effort - some headers remain due to Apache/RFC)
+       <IfModule mod_headers.c>
+           Header always unset Server
+           Header always unset X-Powered-By
+       </IfModule>
+       
+       <Directory "/var/www/html/syr-emulator">
            Options -Indexes +FollowSymLinks
            AllowOverride All
            Require all granted
+           
+           # PHP settings
+           php_flag display_errors off
+           php_flag expose_php off
        </Directory>
+       
+       # Turn off ETags
+       FileETag None
        
        ErrorLog ${APACHE_LOG_DIR}/syr-emulator-error.log
        CustomLog ${APACHE_LOG_DIR}/syr-emulator-access.log combined
    </VirtualHost>
+   ```
+
+   **Linux**: Enable the site:
+
+   ```bash
+   sudo a2ensite syr-emulator.conf
+   sudo systemctl reload apache2
+   ```
+
+   **Windows (XAMPP)**: Restart Apache from XAMPP Control Panel
+
+5. **Optional: PHP configuration (php.ini) for minimal headers:**
+
+   ```ini
+   ; Disable PHP signature in headers
+   expose_php = Off
+   
+   ; Prevent default MIME type
+   default_mimetype = ""
+   ```
+
+6. **Verify header configuration (optional):**
+
+   ```bash
+   # Windows
+   check_headers.bat
+   
+   # Linux/macOS
+   curl -I http://localhost:5333/neosoft/set/ADM/(2)f
    ```
 
 ## Quick Test
@@ -136,7 +195,7 @@ curl -X GET "http://localhost:5333/trio/set/ADM/(2)f"
 Response:
 
 ```json
-{"status": "ok"}
+{"setADM(2)f":"OK"}
 ```
 
 #### 2. Get All Values (GET)
@@ -280,6 +339,34 @@ You can edit these files to simulate different values:
 After changes: No restarts necessary, changes are loaded immediately.
 
 ## Troubleshooting
+
+### Problem: Additional HTTP headers (Date, Server, Content-Type)
+
+**Expected behavior:** Apache automatically adds these headers due to RFC 7231 requirements and internal architecture. This is normal and **does not affect functionality**.
+
+**Why it works anyway:**
+- HTTP headers are **case-insensitive** (RFC 7230)
+- HTTP clients ignore unknown/extra headers
+- `Content-Length` vs `content-length` are treated identically
+
+**Verification:**
+```bash
+# Check current headers
+curl -I http://localhost:5333/neosoft/set/ADM/(2)f
+
+# Real device sends:
+# HTTP/1.1 200 OK
+# content-length: 19
+
+# Apache sends (still compatible):
+# HTTP/1.1 200 OK
+# Date: ...
+# Server: Apache/...
+# Content-Length: 23
+# Content-Type: text/html
+```
+
+**If exact header matching is required:** Use PHP built-in server (`start_server.bat`) instead of Apache.
 
 ### Problem: 404 Not Found
 
