@@ -195,7 +195,7 @@ curl -X GET "http://localhost:5333/trio/set/ADM/(2)f"
 Response:
 
 ```json
-{"setADM(2)f":"OK"}
+{"setADM(2)f": "OK"}
 ```
 
 #### 2. Get All Values (GET)
@@ -236,15 +236,38 @@ curl -X GET "http://localhost:5333/neosoft/set/SV1/25"
 curl -X GET "http://localhost:5333/trio/set/PRF/2"
 ```
 
-Response:
+**Response format:**
+The response key is generated from the path: `set` + `{key}` + `{value}` (slashes removed)
+- Example: `/set/SIR/0` → `{"setSIR0": "OK"}`
+- Example: `/set/AB/true` → `{"setABtrue": "OK"}`
 
+**Success response:**
 ```json
 {
-    "status": "ok",
-    "key": "getAB",
-    "old_value": false,
-    "new_value": true
+    "setSIR0": "OK"
 }
+```
+
+**Validation error response (value outside valid range):**
+```json
+{
+    "setRPD5": "MIMA"
+}
+```
+
+**Validation rules:**
+- `RPD` (Neosoft only): Values must be between 1-3
+  - Valid: `/set/RPD/1`, `/set/RPD/2`, `/set/RPD/3` → Returns `"OK"`
+  - Invalid: `/set/RPD/0`, `/set/RPD/4` → Returns `"MIMA"`
+
+**Testing validation:**
+```bash
+# Windows
+test_validation.bat
+
+# Linux/macOS
+curl http://localhost:5333/neosoft/set/RPD/2   # Returns: {"setRPD2":"OK"}
+curl http://localhost:5333/neosoft/set/RPD/5   # Returns: {"setRPD5":"MIMA"}
 ```
 
 ### Example: Testing Home Assistant Integration
@@ -345,11 +368,13 @@ After changes: No restarts necessary, changes are loaded immediately.
 **Expected behavior:** Apache automatically adds these headers due to RFC 7231 requirements and internal architecture. This is normal and **does not affect functionality**.
 
 **Why it works anyway:**
+
 - HTTP headers are **case-insensitive** (RFC 7230)
 - HTTP clients ignore unknown/extra headers
 - `Content-Length` vs `content-length` are treated identically
 
 **Verification:**
+
 ```bash
 # Check current headers
 curl -I http://localhost:5333/neosoft/set/ADM/(2)f

@@ -100,10 +100,45 @@ class SyrEmulatorTest:
             # SET salt amount
             await self.set_value("SV1", "25")
 
-            # SET regeneration interval
+            # SET regeneration interval (valid range 1-3)
             await self.set_value("RPD", "3")
 
-            # Test 4: Verify changes
+            # Test 4: Validation tests (MIMA response)
+            print("\n" + "=" * 60)
+            print("Testing Validation (MIMA Responses)")
+            print("=" * 60)
+            
+            # Test valid RPD values (should return OK)
+            for valid_value in ["1", "2", "3"]:
+                result = await self.set_value("RPD", valid_value)
+                expected_key = f"setRPD{valid_value}"
+                if expected_key in result and result[expected_key] == "OK":
+                    print(f"   ✓ RPD={valid_value}: OK (valid)")
+                else:
+                    print(f"   ✗ RPD={valid_value}: Unexpected response {result}")
+            
+            # Test invalid RPD values (should return MIMA)
+            for invalid_value in ["0", "4", "99"]:
+                result = await self.set_value("RPD", invalid_value)
+                expected_key = f"setRPD{invalid_value}"
+                if expected_key in result and result[expected_key] == "MIMA":
+                    print(f"   ✓ RPD={invalid_value}: MIMA (out of range)")
+                else:
+                    print(f"   ✗ RPD={invalid_value}: Unexpected response {result}")
+
+            # Test 5: Verify response format
+            print("\n" + "=" * 60)
+            print("Verifying Response Format")
+            print("=" * 60)
+            
+            # Test response key format: set + KEY + VALUE
+            result = await self.set_value("SIR", "0")
+            if "setSIR0" in result and result["setSIR0"] == "OK":
+                print("   ✓ Response format correct: setSIR0 = OK")
+            else:
+                print(f"   ✗ Response format incorrect: {result}")
+
+            # Test 6: Verify changes
             print("\n" + "=" * 60)
             print("Verifying Changes")
             print("=" * 60)
@@ -123,7 +158,7 @@ class SyrEmulatorTest:
             for change in changes:
                 print(change)
 
-            # Test 5: Error handling
+            # Test 7: Error handling
             print("\n" + "=" * 60)
             print("Testing Error Handling")
             print("=" * 60)

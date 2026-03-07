@@ -114,6 +114,21 @@ class DeviceEmulator
         // Get old value
         $oldValue = $this->deviceData[$getKey];
 
+        // Validate value range
+        $validationResult = $this->validateValue($key, $value, $oldValue);
+        
+        // Generate response key: "set" + key + value (remove slashes)
+        // Example: /set/SIR/0 -> setSIR0
+        $responseKey = 'set' . $key . $value;
+        
+        if ($validationResult !== true) {
+            // Value is outside valid range
+            $this->logOperation('SET_VALIDATION_ERROR', $key, $value, "Value outside valid range: $validationResult");
+            $response = json_encode([$responseKey => 'MIMA']);
+            $this->sendRawResponse($response);
+            return;
+        }
+
         // Update the value (convert type if needed)
         $newValue = $this->convertValue($value, $oldValue);
         $this->deviceData[$getKey] = $newValue;
@@ -121,10 +136,37 @@ class DeviceEmulator
         // Log the operation
         $this->logOperation('SET', $key, $value, "Changed $getKey from " . json_encode($oldValue) . " to " . json_encode($newValue));
 
-        // Return success - match real device response format
-        $setKey = 'set' . $key;
-        $response = json_encode([$setKey => 'OK']);
+        // Return success
+        $response = json_encode([$responseKey => 'OK']);
         $this->sendRawResponse($response);
+    }
+
+    /**
+     * Validate value range for specific device parameters
+     * 
+     * @param string $key Device parameter key
+     * @param string $value New value to validate
+     * @param mixed $oldValue Old value (for type checking)
+     * @return true|string True if valid, error message if invalid
+     */
+    private function validateValue(string $key, string $value, $oldValue)
+    {
+        // Special validation for neosoft device RPD parameter
+        // Only values 1-3 are allowed
+        if ($this->deviceType === 'neosoft' && $key === 'RPD') {
+            $intValue = (int) $value;
+            if ($intValue < 1 || $intValue > 3) {
+                return "RPD must be between 1 and 3, got: $value";
+            }
+        }
+
+        // Add more validations here as needed
+        // Example:
+        // if ($key === 'SV1' && (int)$value < 0) {
+        //     return "SV1 cannot be negative";
+        // }
+
+        return true;
     }
 
     /**
