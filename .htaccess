@@ -12,6 +12,11 @@ RewriteCond %{REQUEST_FILENAME} !-d
 
 # Route device-specific API requests to index.php
 # Supported devices: neosoft, trio
+# Supported endpoints:
+#   /{device}/set/ADM/(2)f       - Login
+#   /{device}/get/all            - Get all values
+#   /{device}/get/{key}          - Get single value
+#   /{device}/set/{key}/{value}  - Set value
 RewriteRule ^(neosoft|trio)/(.*)$ index.php [QSA,L]
 
 # Suppress Apache default headers to match real device

@@ -118,7 +118,7 @@ A PHP-based emulator for SYR water treatment devices (Neosoft, Trio) for testing
 
    ```bash
    # Windows
-   check_headers.bat
+   curl -I http://localhost:5333/neosoft/set/ADM/(2)f
    
    # Linux/macOS
    curl -I http://localhost:5333/neosoft/set/ADM/(2)f
@@ -131,7 +131,7 @@ After installation, you can use the test scripts:
 ### Bash (Linux/macOS)
 
 ```bash
-cd emulator/
+cd tests/
 chmod +x test_api.sh
 ./test_api.sh
 
@@ -142,7 +142,7 @@ DEVICE=trio ./test_api.sh
 ### Windows (Batch)
 
 ```cmd
-cd emulator
+cd tests
 test_api.bat
 
 REM Or specific device:
@@ -153,7 +153,7 @@ test_api.bat
 ### Python (recommended for integration)
 
 ```bash
-cd emulator/
+cd tests/
 pip install aiohttp  # If not already installed
 python test_api.py
 
@@ -165,9 +165,23 @@ The test scripts verify:
 
 - ✓ Login endpoint
 - ✓ GET all values
+- ✓ GET single values (with NSC response for invalid keys)
 - ✓ SET operations (boolean, string, integer, float)
+- ✓ Validation (MIMA response for invalid ranges)
 - ✓ Error handling
 - ✓ State verification
+
+**Additional test scripts:**
+
+```bash
+# Test GET single value functionality
+tests/test_get_single.bat         # Windows
+tests/test_get_single.sh          # Linux/macOS
+
+# Test validation (MIMA responses)
+tests/test_validation.bat         # Windows
+tests/test_validation.sh          # Linux/macOS
+```
 
 ## Usage
 
@@ -220,7 +234,36 @@ Response:
 }
 ```
 
-#### 3. Set Value (SET)
+#### 3. Get Single Value (GET)
+
+```bash
+# Get specific value (e.g., valve state)
+curl -X GET "http://localhost:5333/neosoft/get/AB"
+
+# Get flow rate
+curl -X GET "http://localhost:5333/neosoft/get/FLO"
+
+# Get salt amount
+curl -X GET "http://localhost:5333/neosoft/get/SV1"
+```
+
+**Success response (key exists):**
+```json
+{
+    "getAB": false
+}
+```
+
+**Error response (key doesn't exist):**
+```json
+{
+    "getXYZ": "NSC"
+}
+```
+
+> **NSC** = "Not a valid command" - The requested key doesn't exist in the device data.
+
+#### 4. Set Value (SET)
 
 ```bash
 # Close valve (Neosoft)
@@ -263,9 +306,11 @@ The response key is generated from the path: `set` + `{key}` + `{value}` (slashe
 **Testing validation:**
 ```bash
 # Windows
-test_validation.bat
+tests\test_validation.bat
 
 # Linux/macOS
+tests/test_validation.sh
+
 curl http://localhost:5333/neosoft/set/RPD/2   # Returns: {"setRPD2":"OK"}
 curl http://localhost:5333/neosoft/set/RPD/5   # Returns: {"setRPD5":"MIMA"}
 ```

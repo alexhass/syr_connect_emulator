@@ -60,6 +60,17 @@ class SyrEmulatorTest:
                 print(f"     - {key}: {data[key]}")
             return data
 
+    async def get_single(self, key: str) -> dict[str, Any]:
+        """Test GET single value."""
+        url = f"{self.base_url}/{self.device}/get/{key}"
+        print(f"\n🔍 Testing GET single: {url}")
+
+        async with self.session.get(url) as resp:
+            data = await resp.json()
+            print(f"   Status: {resp.status}")
+            print(f"   Response: {data}")
+            return data
+
     async def set_value(self, key: str, value: str) -> dict[str, Any]:
         """Test SET operation."""
         url = f"{self.base_url}/{self.device}/set/{key}/{value}"
@@ -86,7 +97,30 @@ class SyrEmulatorTest:
             # Test 2: GET all
             initial_data = await self.get_all()
 
-            # Test 3: SET operations
+            # Test 3: GET single values
+            print("\n" + "=" * 60)
+            print("Testing GET Single Values")
+            print("=" * 60)
+            
+            # Test existing keys
+            for key in ["AB", "FLO", "SV1", "RPD"]:
+                result = await self.get_single(key)
+                get_key = f"get{key}"
+                if get_key in result and result[get_key] != "NSC":
+                    print(f"   ✓ {key}: {result[get_key]} (exists)")
+                else:
+                    print(f"   ✗ {key}: Unexpected response {result}")
+            
+            # Test non-existing keys (should return NSC)
+            for invalid_key in ["XYZ", "INVALID", "TEST123"]:
+                result = await self.get_single(invalid_key)
+                get_key = f"get{invalid_key}"
+                if get_key in result and result[get_key] == "NSC":
+                    print(f"   ✓ {invalid_key}: NSC (not found)")
+                else:
+                    print(f"   ✗ {invalid_key}: Expected NSC, got {result}")
+
+            # Test 4: SET operations
             print("\n" + "=" * 60)
             print("Testing SET Operations")
             print("=" * 60)
@@ -103,7 +137,7 @@ class SyrEmulatorTest:
             # SET regeneration interval (valid range 1-3)
             await self.set_value("RPD", "3")
 
-            # Test 4: Validation tests (MIMA response)
+            # Test 5: Validation tests (MIMA response)
             print("\n" + "=" * 60)
             print("Testing Validation (MIMA Responses)")
             print("=" * 60)
@@ -126,7 +160,7 @@ class SyrEmulatorTest:
                 else:
                     print(f"   ✗ RPD={invalid_value}: Unexpected response {result}")
 
-            # Test 5: Verify response format
+            # Test 6: Verify response format
             print("\n" + "=" * 60)
             print("Verifying Response Format")
             print("=" * 60)
@@ -138,7 +172,7 @@ class SyrEmulatorTest:
             else:
                 print(f"   ✗ Response format incorrect: {result}")
 
-            # Test 6: Verify changes
+            # Test 7: Verify changes
             print("\n" + "=" * 60)
             print("Verifying Changes")
             print("=" * 60)
@@ -158,7 +192,7 @@ class SyrEmulatorTest:
             for change in changes:
                 print(change)
 
-            # Test 7: Error handling
+            # Test 8: Error handling
             print("\n" + "=" * 60)
             print("Testing Error Handling")
             print("=" * 60)

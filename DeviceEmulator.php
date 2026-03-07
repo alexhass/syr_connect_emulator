@@ -91,6 +91,33 @@ class DeviceEmulator
     }
 
     /**
+     * Handle GET single value
+     * 
+     * Endpoint: /api/get/{key}
+     * Returns single device value or NSC (Not a valid command) if key doesn't exist
+     * 
+     * @param string $key Device parameter key (e.g., 'AB', 'FLO', 'SV1')
+     */
+    public function handleGetSingle(string $key): void
+    {
+        // Convert to get key format (e.g., 'AB' -> 'getAB')
+        $getKey = 'get' . $key;
+
+        // Check if key exists in device data
+        if (!array_key_exists($getKey, $this->deviceData)) {
+            // Key not found - return NSC (Not a valid command)
+            $response = json_encode([$getKey => 'NSC']);
+            $this->sendRawResponse($response);
+            return;
+        }
+
+        // Return the single value
+        $value = $this->deviceData[$getKey];
+        $response = json_encode([$getKey => $value]);
+        $this->sendRawResponse($response);
+    }
+
+    /**
      * Handle SET operation
      * 
      * Endpoint: /api/set/{key}/{value}

@@ -10,6 +10,7 @@
  * URL Structure:
  *   /{device}/set/ADM/(2)f       - Login (required before /get/all)
  *   /{device}/get/all            - Get all device values (JSON)
+ *   /{device}/get/{key}          - Get single device value (returns NSC if not found)
  *   /{device}/set/{key}/{value}  - Set a device value
  * 
  * Device types: neosoft, trio
@@ -74,6 +75,10 @@ if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
 } elseif (preg_match('#^[^/]+/get/all$#', $path)) {
     // Get all values
     $emulator->handleGetAll();
+} elseif (preg_match('#^[^/]+/get/([^/]+)$#', $path, $matches)) {
+    // Get single value
+    $key = $matches[1];
+    $emulator->handleGetSingle($key);
 } elseif (preg_match('#^[^/]+/set/([^/]+)/(.+)$#', $path, $matches)) {
     // Set operation
     $key = $matches[1];
@@ -86,7 +91,7 @@ if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
     $response = json_encode([
         'error' => 'Not Found',
         'path' => $path,
-        'message' => 'Valid endpoints: /{device}/set/ADM/(2)f, /{device}/get/all, /{device}/set/{key}/{value}'
+        'message' => 'Valid endpoints: /{device}/set/ADM/(2)f, /{device}/get/all, /{device}/get/{key}, /{device}/set/{key}/{value}'
     ]);
     $bodyWithEnding = $response . "\r\n\r\n";
     header('content-length: ' . strlen($response));
