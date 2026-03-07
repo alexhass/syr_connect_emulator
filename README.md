@@ -167,7 +167,7 @@ Response:
 # Close valve (Neosoft)
 curl -X GET "http://localhost:5333/neosoft/set/AB/true"
 
-# Change regeneration time (Neosoft) - URL encoded value
+# Change regeneration time (Neosoft) - URL encoded value e.g. "03:30"
 curl -X GET "http://localhost:5333/neosoft/set/RTM/03%3A30"
 
 # Set salt amount (Neosoft)
