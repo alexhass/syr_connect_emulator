@@ -454,11 +454,15 @@ After changes: No restarts necessary, changes are loaded immediately.
 ```bash
 # Check current headers
 curl -I http://localhost:5333/neosoft/set/ADM/(2)f
+```
 
+```bash
 # Real device sends:
 # HTTP/1.1 200 OK
 # content-length: 19
+```
 
+```bash
 # Apache sends (still compatible):
 # HTTP/1.1 200 OK
 # Date: ...
