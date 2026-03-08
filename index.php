@@ -32,6 +32,37 @@ header('X-Remove-Headers: true');
 
 require_once __DIR__ . '/DeviceEmulator.php';
 
+// Parse the request URI
+$requestUri = $_SERVER['REQUEST_URI'];
+$scriptName = dirname($_SERVER['SCRIPT_NAME']);
+$path = str_replace($scriptName, '', $requestUri);
+$path = parse_url($path, PHP_URL_PATH);
+$path = trim($path, '/');
+
+// Remove query string
+$path = explode('?', $path)[0];
+
+// Extract device type from URL prefix
+$deviceType = null;
+if (preg_match('#^(neosoft|trio)/#', $path, $matches)) {
+    $deviceType = $matches[1];
+} else {
+    http_response_code(400);
+    header_remove();
+    $response = json_encode([
+        'error' => 'Invalid device prefix',
+        'path' => $path,
+        'message' => 'URL must start with /neosoft/ or /trio/'
+    ]);
+    $bodyWithEnding = $response . "\r\n\r\n";
+    header('content-length: ' . strlen($response));
+    echo $bodyWithEnding;
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+    exit;
+}
+
 // Persistente Auswahl für JSON-Dateien pro deviceType
 $configFile = null;
 $persistFile = null;
