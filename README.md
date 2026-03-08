@@ -248,6 +248,7 @@ curl -X GET "http://localhost:5333/neosoft/get/SV1"
 ```
 
 **Success response (key exists):**
+
 ```json
 {
     "getAB": false
@@ -255,6 +256,7 @@ curl -X GET "http://localhost:5333/neosoft/get/SV1"
 ```
 
 **Error response (key doesn't exist):**
+
 ```json
 {
     "getXYZ": "NSC"
@@ -280,11 +282,14 @@ curl -X GET "http://localhost:5333/trio/set/PRF/2"
 ```
 
 **Response format:**
+
 The response key is generated from the path: `set` + `{key}` + `{value}` (slashes removed)
+
 - Example: `/set/SIR/0` → `{"setSIR0": "OK"}`
 - Example: `/set/AB/true` → `{"setABtrue": "OK"}`
 
 **Success response:**
+
 ```json
 {
     "setSIR0": "OK"
@@ -292,6 +297,7 @@ The response key is generated from the path: `set` + `{key}` + `{value}` (slashe
 ```
 
 **Validation error response (value outside valid range):**
+
 ```json
 {
     "setRPD5": "MIMA"
@@ -299,11 +305,13 @@ The response key is generated from the path: `set` + `{key}` + `{value}` (slashe
 ```
 
 **Validation rules:**
+
 - `RPD` (Neosoft only): Values must be between 1-3
   - Valid: `/set/RPD/1`, `/set/RPD/2`, `/set/RPD/3` → Returns `"OK"`
   - Invalid: `/set/RPD/0`, `/set/RPD/4` → Returns `"MIMA"`
 
 **Testing validation:**
+
 ```bash
 # Windows
 tests\test_validation.bat
@@ -386,24 +394,32 @@ grep "| neosoft |" set_operations.log
 grep "| trio |" set_operations.log
 ```
 
-
-
 ## Switching Device Data (config parameter)
 
 You can use the URL parameter `config` to switch the JSON device file for each device type. The selection is persistent until changed again.
 
 **Supported patterns:**
+
 - For Neosoft: `neosoft*.json` (e.g. `neosoft2500.json`, `neosoft5000.json`)
 - For Trio: `safetech*.json` and `trio*.json` (e.g. `safetech.json`, `safetech_v4.json`, `trio.json`)
 
 **Examples:**
 
 ```bash
-# Activate Neosoft 5000
+# Activate Neosoft 2500 (NeoSoft) - Default
+curl "http://localhost:5333/neosoft/get/all?config=neosoft2500.json"
+
+# Activate Neosoft 5000 (NeoSoft)
 curl "http://localhost:5333/neosoft/get/all?config=neosoft5000.json"
 
-# Activate Safetech V4 (Trio)
+# Activate Safetech V4 (Trio) - Default
+curl "http://localhost:5333/trio/get/all?config=safetech_v4_copy.json"
+
+# Activate Safetech V4 older firmware (Trio)
 curl "http://localhost:5333/trio/get/all?config=safetech_v4.json"
+
+# Activate safetech.json (Trio)
+curl "http://localhost:5333/trio/get/all?config=safetech.json"
 
 # Activate trio.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=trio.json"
@@ -417,6 +433,7 @@ If no parameter is set, the default file is used (`neosoft2500.json` or `safetec
 **Note:** The JSON file must exist in the `devices/` directory.
 
 ---
+
 ## Customize Device Data
 
 Device data is stored in JSON files under `devices/`:
