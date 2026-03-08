@@ -8,12 +8,14 @@
  * This emulator is specifically designed for the local JSON API
  * (Neosoft 2500, Trio DFR/LS) and does not support XML API.
  */
+
 class DeviceEmulator
 {
     private string $deviceType;
     private string $logFile;
     private array $deviceData;
     private bool $isLoggedIn = false;
+    private ?string $configFile;
 
     /**
      * Constructor
@@ -21,10 +23,16 @@ class DeviceEmulator
      * @param string $deviceType Device type: 'neosoft' or 'trio'
      * @param string $logFile Path to log file for SET operations
      */
-    public function __construct(string $deviceType, string $logFile)
+    /**
+     * @param string $deviceType
+     * @param string $logFile
+     * @param string|null $configFile Optional: explizite JSON-Datei für safetech
+     */
+    public function __construct(string $deviceType, string $logFile, ?string $configFile = null)
     {
         $this->deviceType = strtolower($deviceType);
         $this->logFile = $logFile;
+        $this->configFile = $configFile;
         $this->loadDeviceData();
     }
 
@@ -33,12 +41,21 @@ class DeviceEmulator
      */
     private function loadDeviceData(): void
     {
+        // Use latest firmware fixtures by default, but allow override with configFile if valid
         $fixtureMap = [
             'neosoft' => __DIR__ . '/devices/neosoft2500.json',
-            'trio' => __DIR__ . '/devices/safetech.json',
+            'trio' => __DIR__ . '/devices/safetech_v4_copy.json',
         ];
 
+        // Prüfe, ob configFile gesetzt und gültig ist
         $fixturePath = $fixtureMap[$this->deviceType] ?? $fixtureMap['neosoft'];
+        if ($this->configFile) {
+            $customPath = __DIR__ . '/devices/' . basename($this->configFile);
+            $pattern = $this->deviceType === 'trio' ? '/^(safetech|trio).*\\.json$/' : ($this->deviceType === 'neosoft' ? '/^neosoft.*\\.json$/' : null);
+            if ($pattern && preg_match($pattern, $this->configFile) && file_exists($customPath)) {
+                $fixturePath = $customPath;
+            }
+        }
 
         if (!file_exists($fixturePath)) {
             $this->sendError(500, "Device fixture file not found: $fixturePath");

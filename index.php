@@ -29,7 +29,26 @@ if (function_exists('header_remove')) {
 // Prevent Apache from adding headers via PHP
 header('X-Remove-Headers: true');
 
+
 require_once __DIR__ . '/DeviceEmulator.php';
+
+// Persistente Auswahl für JSON-Dateien pro deviceType
+$configFile = null;
+$persistFile = null;
+if ($deviceType === 'trio' || $deviceType === 'neosoft') {
+    $persistFile = __DIR__ . '/config_selection_' . $deviceType . '.txt';
+    $pattern = $deviceType === 'trio' ? '/^(safetech|trio).*\\.json$/' : '/^neosoft.*\\.json$/';
+    if (isset($_GET['config']) && preg_match($pattern, $_GET['config'])) {
+        $configFile = $_GET['config'];
+        // Schreibe Auswahl persistent
+        file_put_contents($persistFile, $configFile);
+    } elseif ($persistFile && file_exists($persistFile)) {
+        $saved = trim(file_get_contents($persistFile));
+        if (preg_match($pattern, $saved)) {
+            $configFile = $saved;
+        }
+    }
+}
 
 // Configuration
 $logFile = __DIR__ . '/set_operations.log';
@@ -65,8 +84,8 @@ if (preg_match('#^(neosoft|trio)/#', $path, $matches)) {
     exit;
 }
 
-// Initialize device emulator
-$emulator = new DeviceEmulator($deviceType, $logFile);
+// Initialize device emulator, übergebe ggf. configFile
+$emulator = new DeviceEmulator($deviceType, $logFile, $configFile);
 
 // Route the request
 if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {

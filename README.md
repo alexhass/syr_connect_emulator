@@ -386,6 +386,36 @@ grep "| neosoft |" set_operations.log
 grep "| trio |" set_operations.log
 ```
 
+
+## Umschalten der Gerätedaten (config-Parameter)
+
+Mit dem URL-Parameter `config` kann die verwendete Gerätedatei (JSON) für jeden Gerätetyp umgeschaltet werden. Die Auswahl bleibt persistent, bis sie erneut geändert wird.
+
+**Unterstützte Patterns:**
+- Für Neosoft: `neosoft*.json` (z.B. `neosoft2500.json`, `neosoft5000.json`)
+- Für Trio: `safetech*.json` und `trio*.json` (z.B. `safetech.json`, `safetech_v4.json`, `trio.json`)
+
+**Beispiele:**
+
+```bash
+# Neosoft 5000 aktivieren
+curl "http://localhost:5333/neosoft/get/all?config=neosoft5000.json"
+
+# Safetech V4 aktivieren (Trio)
+curl "http://localhost:5333/trio/get/all?config=safetech_v4.json"
+
+# Trio.json aktivieren (Trio)
+curl "http://localhost:5333/trio/get/all?config=trio.json"
+```
+
+Nach einmaligem Aufruf mit ?config=... bleibt die Auswahl für alle folgenden Requests (ohne Parameter) erhalten, bis sie erneut geändert wird.
+
+**Standard:**
+Ohne Parameter wird die Standarddatei verwendet (`neosoft2500.json` bzw. `safetech.json`), sofern keine andere Auswahl gespeichert ist.
+
+**Hinweis:** Die JSON-Datei muss im Verzeichnis `devices/` existieren.
+
+---
 ## Customize Device Data
 
 Device data is stored in JSON files under `devices/`:
