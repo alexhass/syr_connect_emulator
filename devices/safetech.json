@@ -141,7 +141,7 @@
     "getSMC": 0,
     "getSMF": 3500,
     "getSOF": 20,
-    "getSRN": "TRIO123456789",
+    "getSRN": "123aBC56789",
     "getSTH": null,
     "getTMP": 0,
     "getTSD": true,

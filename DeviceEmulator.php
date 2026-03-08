@@ -35,7 +35,7 @@ class DeviceEmulator
     {
         $fixtureMap = [
             'neosoft' => __DIR__ . '/devices/neosoft2500.json',
-            'trio' => __DIR__ . '/devices/trio.json',
+            'trio' => __DIR__ . '/devices/safetech.json',
         ];
 
         $fixturePath = $fixtureMap[$this->deviceType] ?? $fixtureMap['neosoft'];
