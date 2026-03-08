@@ -319,7 +319,12 @@ class DeviceEmulator
         // The body already has \r\n from json_encode, add extra \r\n
         $bodyWithEnding = $body . "\r\n\r\n";
         $contentLength = strlen($body);
-        
+
+        // NOTE: According to the JSON and HTTP standard, a Content-Type: application/json header MUST be sent.
+        // However, SYR devices do NOT send this header (non-standard, but emulated here for compatibility).
+        // If you want to enable the correct header, uncomment the following line:
+        // header('Content-Type: application/json');
+
         // Send exactly what the real device sends - lowercase header name
         header('content-length: ' . $contentLength, true);
         
