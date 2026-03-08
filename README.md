@@ -387,33 +387,34 @@ grep "| trio |" set_operations.log
 ```
 
 
-## Umschalten der Gerätedaten (config-Parameter)
 
-Mit dem URL-Parameter `config` kann die verwendete Gerätedatei (JSON) für jeden Gerätetyp umgeschaltet werden. Die Auswahl bleibt persistent, bis sie erneut geändert wird.
+## Switching Device Data (config parameter)
 
-**Unterstützte Patterns:**
-- Für Neosoft: `neosoft*.json` (z.B. `neosoft2500.json`, `neosoft5000.json`)
-- Für Trio: `safetech*.json` und `trio*.json` (z.B. `safetech.json`, `safetech_v4.json`, `trio.json`)
+You can use the URL parameter `config` to switch the JSON device file for each device type. The selection is persistent until changed again.
 
-**Beispiele:**
+**Supported patterns:**
+- For Neosoft: `neosoft*.json` (e.g. `neosoft2500.json`, `neosoft5000.json`)
+- For Trio: `safetech*.json` and `trio*.json` (e.g. `safetech.json`, `safetech_v4.json`, `trio.json`)
+
+**Examples:**
 
 ```bash
-# Neosoft 5000 aktivieren
+# Activate Neosoft 5000
 curl "http://localhost:5333/neosoft/get/all?config=neosoft5000.json"
 
-# Safetech V4 aktivieren (Trio)
+# Activate Safetech V4 (Trio)
 curl "http://localhost:5333/trio/get/all?config=safetech_v4.json"
 
-# Trio.json aktivieren (Trio)
+# Activate trio.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=trio.json"
 ```
 
-Nach einmaligem Aufruf mit ?config=... bleibt die Auswahl für alle folgenden Requests (ohne Parameter) erhalten, bis sie erneut geändert wird.
+After calling with ?config=... once, the selection will be used for all following requests (without parameter) until changed again.
 
-**Standard:**
-Ohne Parameter wird die Standarddatei verwendet (`neosoft2500.json` bzw. `safetech.json`), sofern keine andere Auswahl gespeichert ist.
+**Default:**
+If no parameter is set, the default file is used (`neosoft2500.json` or `safetech.json`), unless another selection is saved.
 
-**Hinweis:** Die JSON-Datei muss im Verzeichnis `devices/` existieren.
+**Note:** The JSON file must exist in the `devices/` directory.
 
 ---
 ## Customize Device Data
