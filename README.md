@@ -423,6 +423,12 @@ curl "http://localhost:5333/trio/get/all?config=safetech.json"
 
 # Activate trio.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=trio.json"
+
+# Activate Sanibel Softwater UNO (NeoSoft 2500)
+curl "http://localhost:5333/neosoft/get/all?config=sanibel_softwater_uno.json"
+
+# Activate Sanibel Leak protection module A25 (Trio)
+curl "http://localhost:5333/trio/get/all?config=sanibel_leakprotection.json"
 ```
 
 After calling with ?config=... once, the selection will be used for all following requests (without parameter) until changed again.
