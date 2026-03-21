@@ -206,7 +206,7 @@ The emulator exposes the legacy ADM login endpoint used by some device firmwares
 Examples:
 
 ```bash
-# Neosoft (most neosoft fixtures do NOT support ADM -> may return 404)
+# Neosoft (most neosoft fixtures do NOT support ADM -> return 404)
 curl -I "http://localhost:5333/neosoft/set/ADM/(2)f"
 
 # Trio (safetech_v4* supports ADM and returns 200)
