@@ -137,7 +137,7 @@ class DeviceEmulator
     public function handleGetSingle(string $key): void
     {
         // Convert to get key format (e.g., 'AB' -> 'getAB')
-        $getKey = 'get' . $key;
+        $getKey = 'get' . strtoupper($key);
 
         // Check if key exists in device data
         if (!array_key_exists($getKey, $this->deviceData)) {
@@ -165,7 +165,7 @@ class DeviceEmulator
     public function handleSet(string $key, string $value): void
     {
         // Convert set key to get key (e.g., 'AB' -> 'getAB', 'RTM' -> 'getRTM')
-        $getKey = 'get' . $key;
+        $getKey = 'get' . strtoupper($key);
 
         // Check if key exists in device data
         if (!array_key_exists($getKey, $this->deviceData)) {
@@ -182,7 +182,7 @@ class DeviceEmulator
         
         // Generate response key: "set" + key + value (remove slashes)
         // Example: /set/SIR/0 -> setSIR0
-        $responseKey = 'set' . $key . $value;
+        $responseKey = 'set' . strtoupper($key) . $value;
         
         if ($validationResult !== true) {
             // Value is outside valid range
