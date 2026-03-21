@@ -14,6 +14,7 @@ class DeviceEmulator
     private string $deviceType;
     private string $logFile;
     private array $deviceData;
+    private string $fixturePath;
     private bool $isLoggedIn = false;
     private ?string $configFile;
 
@@ -62,6 +63,9 @@ class DeviceEmulator
             exit;
         }
 
+        // remember which fixture file we loaded (basename used for device-specific behavior)
+        $this->fixturePath = $fixturePath;
+
         $json = file_get_contents($fixturePath);
         $this->deviceData = json_decode($json, true);
 
@@ -79,11 +83,27 @@ class DeviceEmulator
      */
     public function handleLogin(): void
     {
+        // For most safetech_v4* fixtures the ADM login exists and returns OK.
+        // For all other device fixtures the ADM endpoint does not exist and should return 404 File Not Found.
+        $fixtureName = basename($this->fixturePath);
+        if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
+            // Emulate device behavior: 404 with plain "File Not Found" body
+            $body = 'File Not Found';
+            http_response_code(404);
+            header_remove();
+            header('content-length: ' . strlen($body), true);
+            echo $body . "\r\n\r\n";
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+            return;
+        }
+
         $this->isLoggedIn = true;
-        
+
         // Log the login attempt
         $this->logOperation('LOGIN', 'ADM', '(2)f');
-        
+
         // Return success - match real device response exactly
         $response = json_encode(['setADM(2)f' => 'OK']);
         $this->sendRawResponse($response);
