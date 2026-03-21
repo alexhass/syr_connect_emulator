@@ -221,8 +221,10 @@ Success response (when supported):
 
 Not supported / missing ADM response:
 
+```bash
 HTTP/1.1 404 Not Found
-File Not Found
+Not Found
+```
 
 #### 2. Get All Values (GET)
 
