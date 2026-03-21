@@ -45,7 +45,7 @@ class DeviceEmulator
         // Use latest firmware fixtures by default, but allow override with configFile if valid
         $fixtureMap = [
             'neosoft' => __DIR__ . '/devices/neosoft2500.json',
-            'trio' => __DIR__ . '/devices/safetech_v4_copy.json',
+            'trio' => __DIR__ . '/devices/safetechplus.json',
         ];
 
         // Prüfe, ob configFile gesetzt und gültig ist

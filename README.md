@@ -426,7 +426,7 @@ curl "http://localhost:5333/neosoft/get/all?config=neosoft2500.json"
 # Activate Neosoft 5000 (NeoSoft)
 curl "http://localhost:5333/neosoft/get/all?config=neosoft5000.json"
 
-# Activate Safetech V4 (Trio) - Default
+# Activate Safetech V4 (Trio)
 curl "http://localhost:5333/trio/get/all?config=safetech_v4_copy.json"
 
 # Activate Safetech V4 older firmware (Trio)
@@ -435,7 +435,7 @@ curl "http://localhost:5333/trio/get/all?config=safetech_v4.json"
 # Activate safetech.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=safetech.json"
 
-# Activate safetechplus.json (Trio)
+# Activate safetechplus.json (Trio) - Default
 curl "http://localhost:5333/trio/get/all?config=safetechplus.json"
 
 # Activate trio.json (Trio)
