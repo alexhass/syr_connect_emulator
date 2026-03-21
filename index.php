@@ -44,7 +44,7 @@ $path = explode('?', $path)[0];
 
 // Extract device type from URL prefix
 $deviceType = null;
-if (preg_match('#^(neosoft|trio)/#', $path, $matches)) {
+if (preg_match('#^(neosoft|trio|pontos-base)/#', $path, $matches)) {
     $deviceType = $matches[1];
 } else {
     http_response_code(400);
@@ -52,7 +52,7 @@ if (preg_match('#^(neosoft|trio)/#', $path, $matches)) {
     $response = json_encode([
         'error' => 'Invalid device prefix',
         'path' => $path,
-        'message' => 'URL must start with /neosoft/ or /trio/'
+        'message' => 'URL must start with /neosoft/, /trio/ or /pontos-base/'
     ]);
     $bodyWithEnding = $response . "\r\n\r\n";
     header('content-length: ' . strlen($response));
@@ -96,15 +96,15 @@ $path = explode('?', $path)[0];
 
 // Extract device type from URL prefix
 $deviceType = null;
-if (preg_match('#^(neosoft|trio)/#', $path, $matches)) {
+if (preg_match('#^(neosoft|trio|pontos-base)/#', $path, $matches)) {
     $deviceType = $matches[1];
 } else {
     http_response_code(400);
     header_remove();
-    $response = json_encode([
+        $response = json_encode([
         'error' => 'Invalid device prefix',
         'path' => $path,
-        'message' => 'URL must start with /neosoft/ or /trio/'
+        'message' => 'URL must start with /neosoft/, /trio/ or /pontos-base/'
     ]);
     $bodyWithEnding = $response . "\r\n\r\n";
     header('content-length: ' . strlen($response));
