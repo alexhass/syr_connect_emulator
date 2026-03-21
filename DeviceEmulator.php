@@ -45,6 +45,7 @@ class DeviceEmulator
         // Use latest firmware fixtures by default, but allow override with configFile if valid
         $fixtureMap = [
             'neosoft' => __DIR__ . '/devices/neosoft2500.json',
+            'pontos-base' => __DIR__ . '/devices/pontos.json',
             'trio' => __DIR__ . '/devices/safetechplus.json',
         ];
 
@@ -52,7 +53,7 @@ class DeviceEmulator
         $fixturePath = $fixtureMap[$this->deviceType] ?? $fixtureMap['neosoft'];
         if ($this->configFile) {
             $customPath = __DIR__ . '/devices/' . basename($this->configFile);
-            $pattern = $this->deviceType === 'trio' ? '/^(safetech|trio).*\\.json$/' : ($this->deviceType === 'neosoft' ? '/^neosoft.*\\.json$/' : null);
+            $pattern = $this->deviceType === 'trio' ? '/^(safetech|trio).*\\.json$/' : ($this->deviceType === 'neosoft' ? '/^neosoft.*\\.json$/' : ($this->deviceType === 'pontos-base' ? '/^pontos.*\\.json$/' : null));
             if ($pattern && preg_match($pattern, $this->configFile) && file_exists($customPath)) {
                 $fixturePath = $customPath;
             }
