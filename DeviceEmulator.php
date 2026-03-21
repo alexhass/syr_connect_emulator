@@ -88,12 +88,10 @@ class DeviceEmulator
         // For all other device fixtures the ADM endpoint does not exist and should return 404 File Not Found.
         $fixtureName = basename($this->fixturePath);
         if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
-            // Emulate device behavior: 404 with plain "File Not Found" body
-            $body = 'Not Found';
+            // Emulate device behavior: return an empty 404 for unsupported commands
             http_response_code(404);
             header_remove();
-            header('content-length: ' . strlen($body), true);
-            echo $body . "\r\n\r\n";
+            header('content-length: 0', true);
             if (function_exists('fastcgi_finish_request')) {
                 fastcgi_finish_request();
             }

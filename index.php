@@ -138,14 +138,9 @@ if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
     // Unknown endpoint
     http_response_code(404);
     header_remove();
-    $response = json_encode([
-        'error' => 'Not Found',
-        'path' => $path,
-        'message' => 'Valid endpoints: /{device}/set/ADM/(2)f, /{device}/get/all, /{device}/get/{key}, /{device}/set/{key}/{value}'
-    ]);
-    $bodyWithEnding = $response . "\r\n\r\n";
-    header('content-length: ' . strlen($response));
-    echo $bodyWithEnding;
+    // Return an empty 404 body for unknown commands (no JSON)
+    header('content-length: 0', true);
+    // send no body
     if (function_exists('fastcgi_finish_request')) {
         fastcgi_finish_request();
     }
