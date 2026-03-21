@@ -7,6 +7,7 @@ setlocal enabledelayedexpansion
 REM Configuration
 if "%BASE_URL%"=="" set BASE_URL=http://localhost:5333
 if "%DEVICE%"=="" set DEVICE=neosoft
+if "%CONFIG%"=="" set CONFIG=
 
 echo ==========================================
 echo SYR Device Emulator - API Test
@@ -22,7 +23,18 @@ echo ==========================================
 echo 1. Testing Login Endpoint
 echo ==========================================
 echo Testing: Login ...
+set ADM_EXPECT=404
+echo DEVICE=%DEVICE% CONFIG=%CONFIG%
+if /I "%DEVICE%"=="pontos-base" (
+	set ADM_EXPECT=200
+) else (
+	echo %CONFIG% | findstr /R /C:"safetech_v4" >nul && (
+		if /I "%DEVICE:~0,4%"=="trio" set ADM_EXPECT=200
+	)
+)
 curl -s -w "%%{http_code}" "%BASE_URL%/%DEVICE%/set/ADM/(2)f" > test_response.tmp
+type test_response.tmp
+echo Expected ADM HTTP: %ADM_EXPECT%
 echo.
 
 echo ==========================================

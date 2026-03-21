@@ -7,6 +7,7 @@ set -e
 # Configuration
 BASE_URL="${BASE_URL:-http://localhost:5333}"
 DEVICE="${DEVICE:-neosoft}"
+CONFIG="${CONFIG:-}"
 
 echo "=========================================="
 echo "SYR Device Emulator - API Test"
@@ -57,7 +58,14 @@ test_endpoint() {
 echo "=========================================="
 echo "1. Testing Login Endpoint"
 echo "=========================================="
-test_endpoint "Login" "$BASE_URL/$DEVICE/set/ADM/(2)f" 200
+# Determine expected status for ADM login
+ADM_EXPECT=404
+if [[ "$DEVICE" == "pontos-base" ]]; then
+    ADM_EXPECT=200
+elif [[ "$DEVICE" == trio* && "$CONFIG" =~ safetech_v4 ]]; then
+    ADM_EXPECT=200
+fi
+test_endpoint "Login" "$BASE_URL/$DEVICE/set/ADM/(2)f" $ADM_EXPECT
 
 echo "=========================================="
 echo "2. Testing GET All Values"
