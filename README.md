@@ -421,6 +421,9 @@ curl "http://localhost:5333/trio/get/all?config=safetech_v4.json"
 # Activate safetech.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=safetech.json"
 
+# Activate safetechplus.json (Trio)
+curl "http://localhost:5333/trio/get/all?config=safetechplus.json"
+
 # Activate trio.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=trio.json"
 
