@@ -88,7 +88,7 @@ class DeviceEmulator
         $fixtureName = basename($this->fixturePath);
         if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
             // Emulate device behavior: 404 with plain "File Not Found" body
-            $body = 'File Not Found';
+            $body = 'Not Found';
             http_response_code(404);
             header_remove();
             header('content-length: ' . strlen($body), true);
