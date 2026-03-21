@@ -198,19 +198,31 @@ No environment variables required!
 
 #### 1. Login (required before GET)
 
-```bash
-# Neosoft
-curl -X GET "http://localhost:5333/neosoft/set/ADM/(2)f"
+The emulator exposes the legacy ADM login endpoint used by some device firmwares. Behavior depends on the selected JSON fixture:
 
-# Trio
-curl -X GET "http://localhost:5333/trio/set/ADM/(2)f"
+- For Trio fixtures whose filename starts with `safetech_v4` and for `pontos.json` the ADM endpoint exists and returns HTTP 200 with the JSON body `{"setADM(2)f":"OK"}`.
+- For other fixtures the ADM endpoint is not present and the emulator returns HTTP 404 with a plain `File Not Found` body (to match real device behavior).
+
+Examples:
+
+```bash
+# Neosoft (most neosoft fixtures do NOT support ADM -> may return 404)
+curl -I "http://localhost:5333/neosoft/set/ADM/(2)f"
+
+# Trio (safetech_v4* supports ADM and returns 200)
+curl -I "http://localhost:5333/trio/set/ADM/(2)f"
 ```
 
-Response:
+Success response (when supported):
 
 ```json
 {"setADM(2)f": "OK"}
 ```
+
+Not supported / missing ADM response:
+
+HTTP/1.1 404 Not Found
+File Not Found
 
 #### 2. Get All Values (GET)
 
