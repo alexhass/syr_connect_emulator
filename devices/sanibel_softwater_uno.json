@@ -87,15 +87,15 @@
     "getWFC": "",
     "getWFL": [
         {
-            "SSID": "xx",
+            "SSID": "wifi1",
             "Signal": -73
         },
         {
-            "SSID": "xx",
+            "SSID": "wifi2",
             "Signal": -84
         },
         {
-            "SSID": "xx",
+            "SSID": "wifi3",
             "Signal": -84
         }
     ],
