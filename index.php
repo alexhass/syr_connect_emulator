@@ -80,13 +80,14 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base'], true)) {
     // Accept any existing JSON fixture in the devices folder. Use basename()
     // to avoid directory traversal and require the file to exist.
         if (isset($_GET['config'])) {
-            $rawConfig = $_GET['config'];
+            $rawConfig = trim((string)($_GET['config'] ?? ''));
             $lc = strtolower($rawConfig);
             $savedOk = false;
             $reportedFile = null;
 
             // Special values to reset to default
-            if (in_array($lc, ['default', 'reset', 'none'], true)) {
+            // Treat empty value as a request to reset to default
+            if ($rawConfig === '' || in_array($lc, ['default', 'reset', 'none'], true)) {
                 if (file_exists($persistFile)) {
                     $savedOk = @unlink($persistFile);
                     if ($savedOk === false) {
