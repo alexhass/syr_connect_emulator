@@ -1,5 +1,6 @@
-# Log files
-set_operations.log
+# Runtime folders
+/logs/
+/configs/
 php_errors.log
 
 # OS files

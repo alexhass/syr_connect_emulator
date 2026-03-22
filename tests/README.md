@@ -112,6 +112,6 @@ chmod +x *.sh
 
 ## Notes
 
-- All tests log operations to `set_operations.log` in the main directory
+- All tests log operations to `logs/set_operations.log`
 - Tests require the emulator to be running on port 5333
 - Default device is `neosoft`, can be changed via parameters

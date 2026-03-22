@@ -53,7 +53,7 @@ A PHP-based emulator for SYR water treatment devices (Neosoft, Trio) for testing
    ```bash
    cd /var/www/html/syr-emulator
    chmod 755 .
-   chmod 666 set_operations.log  # Or create the file on first SET
+    chmod 666 logs/set_operations.log  # Or create the file on first SET
    ```
 
 4. **Apache Virtual Host configuration (recommended for port 5333):**
@@ -383,7 +383,7 @@ This emulator is designed to work with the **local JSON API client** (`api_json.
 
 ## Logfile
 
-All SET operations are logged to `set_operations.log`:
+All SET operations are logged to `logs/set_operations.log`:
 
 ```log
 [2026-03-06 15:30:45] SET | Device: neosoft | Client: 192.168.1.100 | Key: AB | Value: true | Changed getAB from false to true | User-Agent: python-aiohttp/3.9.1
@@ -395,7 +395,7 @@ All SET operations are logged to `set_operations.log`:
 
 ```bash
 # Live monitoring
-tail -f set_operations.log
+tail -f logs/set_operations.log
 
 # Last 20 entries
 
@@ -428,17 +428,17 @@ cat configs/persisted_neosoft.json
 ```
 
 To clear persisted state for a device remove its `persisted_<device>.json` file.
-tail -n 20 set_operations.log
+tail -n 20 logs/set_operations.log
 
 # Filter by client
-grep "192.168.1.100" set_operations.log
+grep "192.168.1.100" logs/set_operations.log
 
 # Filter by SET type
-grep "SET |" set_operations.log
+grep "SET |" logs/set_operations.log
 
 # Filter by device
-grep "| neosoft |" set_operations.log
-grep "| trio |" set_operations.log
+grep "| neosoft |" logs/set_operations.log
+grep "| trio |" logs/set_operations.log
 ```
 
 ## Switching Device Data (config parameter)

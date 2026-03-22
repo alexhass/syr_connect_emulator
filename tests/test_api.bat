@@ -104,7 +104,7 @@ del test_response.tmp 2>nul
 echo ==========================================
 echo Tests completed!
 echo ==========================================
-echo Check set_operations.log for detailed logs
+echo Check logs\set_operations.log for detailed logs
 echo.
 
 pause

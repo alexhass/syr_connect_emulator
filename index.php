@@ -182,7 +182,8 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base'], true)) {
 }
 
 // Configuration
-$logFile = __DIR__ . '/set_operations.log';
+// Ensure main SET operations logfile is inside logs/
+$logFile = $logsDir . '/set_operations.log';
 
 // Parse the request URI
 $requestUri = $_SERVER['REQUEST_URI'];
