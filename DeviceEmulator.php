@@ -119,7 +119,12 @@ class DeviceEmulator
         // Some devices require login first
         // For testing, we'll allow it without login but log a warning
         if (!$this->isLoggedIn) {
-            error_log("WARNING: /get/all accessed without prior login");
+            $logPath = __DIR__ . '/logs/emulator_internal.log';
+            if (!is_dir(dirname($logPath))) {
+                @mkdir(dirname($logPath), 0777, true);
+            }
+            $msg = sprintf("[%s] WARNING: /get/all accessed without prior login | device=%s\n", date('c'), $this->deviceType);
+            @file_put_contents($logPath, $msg, FILE_APPEND | LOCK_EX);
         }
 
         $response = json_encode($this->deviceData, JSON_PRETTY_PRINT);

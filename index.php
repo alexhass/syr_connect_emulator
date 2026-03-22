@@ -66,28 +66,82 @@ if (preg_match('#^(neosoft|trio|pontos-base)/#', $path, $matches)) {
 // Persistente Auswahl für JSON-Dateien pro deviceType
 $configFile = null;
 $persistFile = null;
+// Ensure runtime folders exist for persisted configs and logs
+$logsDir = __DIR__ . '/logs';
+$configsDir = __DIR__ . '/configs';
+if (!is_dir($logsDir)) {
+    @mkdir($logsDir, 0777, true);
+}
+if (!is_dir($configsDir)) {
+    @mkdir($configsDir, 0777, true);
+}
 if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base'], true)) {
-    $persistFile = __DIR__ . '/config_selection_' . $deviceType . '.txt';
+    $persistFile = $configsDir . '/config_selection_' . $deviceType . '.txt';
     // Accept any existing JSON fixture in the devices folder. Use basename()
     // to avoid directory traversal and require the file to exist.
-    if (isset($_GET['config'])) {
-        $rawConfig = $_GET['config'];
-        $lc = strtolower($rawConfig);
-        // Special values to reset to default
-        if (in_array($lc, ['default'], true)) {
-            if (file_exists($persistFile)) {
-                @unlink($persistFile);
+        if (isset($_GET['config'])) {
+            $rawConfig = $_GET['config'];
+            $lc = strtolower($rawConfig);
+            $savedOk = false;
+            $reportedFile = null;
+
+            // Special values to reset to default
+            if (in_array($lc, ['default', 'reset', 'none'], true)) {
+                if (file_exists($persistFile)) {
+                    $savedOk = @unlink($persistFile);
+                    if ($savedOk === false) {
+                        $logPath = $logsDir . '/emulator_internal.log';
+                        $msg = sprintf("[%s] Failed to remove persist file: %s\n", date('c'), $persistFile);
+                        @file_put_contents($logPath, $msg, FILE_APPEND | LOCK_EX);
+                    }
+                } else {
+                    // nothing to remove, treat as success
+                    $savedOk = true;
+                }
+                $configFile = null; // force default fixture
+                $reportedFile = 'default';
+            } else {
+                $candidate = basename($rawConfig);
+                $customPath = __DIR__ . '/devices/' . $candidate;
+                if (file_exists($customPath)) {
+                    $configFile = $candidate;
+                    // Schreibe Auswahl persistent (LOCK_EX), prüfe Ergebnis
+                    $writeResult = @file_put_contents($persistFile, $configFile, LOCK_EX);
+                    if ($writeResult === false) {
+                        $dir = dirname($persistFile);
+                        $writable = is_writable($dir) ? 'writable' : 'not writable';
+                        $logPath = $logsDir . '/emulator_internal.log';
+                        $msg = sprintf("[%s] Failed to write persist file: %s (dir %s is %s)\n", date('c'), $persistFile, $dir, $writable);
+                        @file_put_contents($logPath, $msg, FILE_APPEND | LOCK_EX);
+                        $savedOk = false;
+                    } else {
+                        $savedOk = true;
+                    }
+                    $reportedFile = $candidate;
+                } else {
+                    // requested config not found
+                    $savedOk = false;
+                    $reportedFile = $candidate;
+                }
             }
-            $configFile = null; // force default fixture
-        } else {
-            $candidate = basename($rawConfig);
-            $customPath = __DIR__ . '/devices/' . $candidate;
-            if (file_exists($customPath)) {
-                $configFile = $candidate;
-                // Schreibe Auswahl persistent
-                file_put_contents($persistFile, $configFile);
+
+            // Return immediate JSON response about config change and stop processing
+            $responseObj = [
+                'setFILE' => $reportedFile,
+                'setSAVED' => $savedOk === true,
+            ];
+            $responseJson = json_encode($responseObj);
+
+            // Minimal headers to match emulator behavior
+            http_response_code(200);
+            header_remove();
+            header('X-Emulator-Config: ' . ($reportedFile ?? 'default'), true);
+            header('content-length: ' . strlen($responseJson), true);
+            echo $responseJson . "\r\n\r\n";
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
             }
-        }
+            exit;
     } elseif ($persistFile && file_exists($persistFile)) {
         $saved = trim(file_get_contents($persistFile));
         $savedBasename = basename($saved);
