@@ -96,19 +96,19 @@
     "getVPS1": 9222,
     "getVRE1": 5,
     "getWAD": 1,
-    "getWFC": "",
+    "getWFC": "syr-neosoft2500-wifi1",
     "getWFL": [
         {
             "Signal": -51,
-            "SSID": "SMA3012408774"
+            "SSID": "syr-neosoft2500-wifi2"
         },
         {
             "Signal": -69,
-            "SSID": "wifi1"
+            "SSID": "syr-neosoft2500-wifi3"
         },
         {
             "Signal": -70,
-            "SSID": "wifi2"
+            "SSID": "syr-neosoft2500-wifi4"
         }
     ],
     "getWFR": 0,

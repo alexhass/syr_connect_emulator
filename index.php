@@ -77,6 +77,12 @@ if (!is_dir($configsDir)) {
 }
 if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base'], true)) {
     $persistFile = $configsDir . '/config_selection_' . $deviceType . '.txt';
+    // Default fixture filenames (kept in sync with DeviceEmulator::$fixtureMap)
+    $defaultFixtureMap = [
+        'neosoft' => 'neosoft2500.json',
+        'pontos-base' => 'pontos.json',
+        'trio' => 'safetechplus.json',
+    ];
     // Accept any existing JSON fixture in the devices folder. Use basename()
     // to avoid directory traversal and require the file to exist.
         if (isset($_GET['config'])) {
@@ -100,7 +106,7 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base'], true)) {
                     $savedOk = true;
                 }
                 $configFile = null; // force default fixture
-                $reportedFile = 'default';
+                $reportedFile = $defaultFixtureMap[$deviceType] ?? null;
             } else {
                 $candidate = basename($rawConfig);
                 $customPath = __DIR__ . '/devices/' . $candidate;
@@ -126,9 +132,31 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base'], true)) {
                 }
             }
 
+            // Determine effective filename to report (respect device default map)
+            if ($reportedFile !== null) {
+                $effectiveFile = $reportedFile;
+            } elseif (isset($defaultFixtureMap[$deviceType])) {
+                $effectiveFile = $defaultFixtureMap[$deviceType];
+            } else {
+                // No default mapping for this device -> return 401 with JSON body
+                http_response_code(401);
+                $errorObj = [
+                    'error' => 'no_default_mapping',
+                    'device' => $deviceType
+                ];
+                $errorJson = json_encode($errorObj, JSON_PRETTY_PRINT);
+                header_remove();
+                header('content-length: ' . strlen($errorJson), true);
+                echo $errorJson . "\r\n\r\n";
+                if (function_exists('fastcgi_finish_request')) {
+                    fastcgi_finish_request();
+                }
+                exit;
+            }
+
             // Return immediate JSON response about config change and stop processing
             $responseObj = [
-                'setFILE' => $reportedFile,
+                'setFILE' => $effectiveFile,
                 'setSAVED' => $savedOk === true,
             ];
             $responseJson = json_encode($responseObj, JSON_PRETTY_PRINT);
@@ -136,7 +164,7 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base'], true)) {
             // Minimal headers to match emulator behavior
             http_response_code(200);
             header_remove();
-            header('X-Emulator-Config: ' . ($reportedFile ?? 'default'), true);
+            header('X-Emulator-Config: ' . $effectiveFile, true);
             header('content-length: ' . strlen($responseJson), true);
             echo $responseJson . "\r\n\r\n";
             if (function_exists('fastcgi_finish_request')) {
