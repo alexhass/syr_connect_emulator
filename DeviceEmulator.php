@@ -268,6 +268,21 @@ class DeviceEmulator
             $this->writeInternalLog(sprintf("Persisted state saved (%s): %s", $this->getStateFilePath(), implode(',', $keys)));
         }
 
+        // If SV1 changed, derive SS1 = SV1 * 2 (integers only) and persist it as well
+        if ($getKey === 'getSV1') {
+            $ss1Key = 'getSS1';
+            // No floats expected — use integer multiplication
+            $ss1Val = (int)$newValue * 2;
+            $this->deviceData[$ss1Key] = $ss1Val;
+            $persisted[$ss1Key] = $ss1Val;
+            $savedSs = $this->savePersistedState($persisted);
+            if ($savedSs) {
+                $this->writeInternalLog(sprintf("Derived %s=%s from %s=%s", $ss1Key, $ss1Val, $getKey, (string)$newValue));
+            } else {
+                $this->writeInternalLog(sprintf("Failed to persist derived %s for %s", $ss1Key, $getKey));
+            }
+        }
+
         // Special behavior: changes to AB should modify VLV with a delayed transition
         // If AB changed from false->true: set getVLV = 11 now, schedule ->10 after 30s
         // If AB changed from true->false: set getVLV = 21 now, schedule ->20 after 30s
