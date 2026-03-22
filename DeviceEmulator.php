@@ -512,6 +512,13 @@ class DeviceEmulator
         if (!is_dir($dir)) {
             @mkdir($dir, 0777, true);
         }
+        // Normalize specific hex keys to lowercase before persisting
+        $hexKeys = ['getALA', 'getWRN', 'getNOT'];
+        foreach ($hexKeys as $hk) {
+            if (isset($state[$hk]) && is_string($state[$hk])) {
+                $state[$hk] = strtolower($state[$hk]);
+            }
+        }
         $json = json_encode($state, JSON_PRETTY_PRINT);
         $result = @file_put_contents($path, $json, LOCK_EX);
         if ($result === false) {
