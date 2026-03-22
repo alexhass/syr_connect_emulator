@@ -74,6 +74,13 @@ class DeviceEmulator
             $this->sendError(500, "Failed to parse device data: " . json_last_error_msg());
             exit;
         }
+
+        // Merge any persisted runtime state (SET operations) so GET returns the updated values.
+        $persisted = $this->loadPersistedState();
+        if (!empty($persisted) && is_array($persisted)) {
+            // Persisted state contains get-keys (e.g., getAB) => value
+            $this->deviceData = array_replace($this->deviceData, $persisted);
+        }
     }
 
     /**
@@ -211,6 +218,17 @@ class DeviceEmulator
         // Log the operation
         $this->logOperation('SET', $key, $value, "Changed $getKey from " . json_encode($oldValue) . " to " . json_encode($newValue));
 
+        // Persist this SET so subsequent GET requests return the updated value
+        $persisted = $this->loadPersistedState();
+        if (!is_array($persisted)) {
+            $persisted = [];
+        }
+        $persisted[$getKey] = $newValue;
+        $saved = $this->savePersistedState($persisted);
+        if (!$saved) {
+            $this->writeInternalLog("Failed to persist state for $getKey");
+        }
+
         // Return success
         $response = json_encode([$responseKey => 'OK']);
         $this->sendRawResponse($response);
@@ -323,6 +341,68 @@ class DeviceEmulator
             'device_type' => $this->deviceType
         ]);
         $this->sendRawResponse($response);
+    }
+
+    /**
+     * Get path to persisted state file for this device type
+     */
+    private function getStateFilePath(): string
+    {
+        return __DIR__ . '/configs/persisted_' . $this->deviceType . '.json';
+    }
+
+    /**
+     * Load persisted state (returns array of getKey => value)
+     */
+    private function loadPersistedState(): array
+    {
+        $path = $this->getStateFilePath();
+        if (!file_exists($path)) {
+            return [];
+        }
+        $json = @file_get_contents($path);
+        if ($json === false) {
+            $this->writeInternalLog("Failed to read persisted state: $path");
+            return [];
+        }
+        $data = json_decode($json, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+            $this->writeInternalLog("Invalid persisted state JSON: $path");
+            return [];
+        }
+        return $data;
+    }
+
+    /**
+     * Save persisted state (getKey => value) to disk
+     */
+    private function savePersistedState(array $state): bool
+    {
+        $path = $this->getStateFilePath();
+        $dir = dirname($path);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0777, true);
+        }
+        $json = json_encode($state, JSON_PRETTY_PRINT);
+        $result = @file_put_contents($path, $json, LOCK_EX);
+        if ($result === false) {
+            $this->writeInternalLog("Failed to write persisted state: $path");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Write a short internal log message to logs/emulator_internal.log
+     */
+    private function writeInternalLog(string $message): void
+    {
+        $logPath = __DIR__ . '/logs/emulator_internal.log';
+        if (!is_dir(dirname($logPath))) {
+            @mkdir(dirname($logPath), 0777, true);
+        }
+        $msg = sprintf("[%s] %s\n", date('c'), $message);
+        @file_put_contents($logPath, $msg, FILE_APPEND | LOCK_EX);
     }
 
     /**

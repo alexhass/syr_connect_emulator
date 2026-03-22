@@ -398,6 +398,36 @@ All SET operations are logged to `set_operations.log`:
 tail -f set_operations.log
 
 # Last 20 entries
+
+## Persisted Runtime State
+
+- **What:** SET operations are persisted per-device so values remain across requests and restarts.
+- **Location:** Persisted state files are written to `configs/persisted_<device>.json` (for example `configs/persisted_neosoft.json`).
+- **Behavior:** On startup the emulator merges the persisted state into the fixture JSON so `GET /.../get/all` returns the updated values.
+- **Errors:** Read/write failures are logged to `logs/emulator_internal.log`.
+
+### Quick test
+
+1. Set a value:
+
+```bash
+curl -i "http://localhost:5333/neosoft/set/AB/true"
+```
+
+2. Confirm persisted value is returned by GET all:
+
+```bash
+curl -i "http://localhost:5333/neosoft/get/all"
+# Check that "getAB": true appears in the JSON body
+```
+
+3. Inspect persisted file on disk:
+
+```bash
+cat configs/persisted_neosoft.json
+```
+
+To clear persisted state for a device remove its `persisted_<device>.json` file.
 tail -n 20 set_operations.log
 
 # Filter by client
