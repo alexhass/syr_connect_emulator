@@ -149,6 +149,23 @@ class DeviceEmulator
             }
         }
 
+        // Ensure any pending transitions are applied now (on GET requests) and persisted.
+        $persisted = $this->loadPersistedState();
+        if (!is_array($persisted)) {
+            $persisted = [];
+        }
+        $this->applyPendingTransitions($persisted);
+        // Merge persisted values (excluding internal transitions) to deviceData
+        $merge = $persisted;
+        if (isset($merge['__transitions'])) {
+            unset($merge['__transitions']);
+        }
+        if (!empty($merge)) {
+            $this->deviceData = array_replace($this->deviceData, $merge);
+        }
+        // Persist any changes made by applyPendingTransitions
+        $this->savePersistedState($persisted);
+
         $response = json_encode($this->deviceData, JSON_PRETTY_PRINT);
         $this->sendRawResponse($response);
     }
@@ -236,6 +253,11 @@ class DeviceEmulator
         if (!$saved) {
             $this->writeInternalLog("Failed to persist state for $getKey");
         }
+        else {
+            $keys = array_keys($persisted);
+            if(($idx = array_search('__transitions', $keys)) !== false) { unset($keys[$idx]); }
+            $this->writeInternalLog(sprintf("Persisted state saved (%s): %s", $this->getStateFilePath(), implode(',', $keys)));
+        }
 
         // Special behavior: changes to AB should modify VLV with a delayed transition
         // If AB changed from false->true: set getVLV = 11 now, schedule ->10 after 30s
@@ -259,7 +281,26 @@ class DeviceEmulator
 
             if (!empty($transitions)) {
                 $persisted['__transitions'] = $transitions;
-                $this->savePersistedState($persisted);
+                $saved2 = $this->savePersistedState($persisted);
+                if ($saved2) {
+                    $this->writeInternalLog(sprintf("Scheduled transitions saved to %s: %s", $this->getStateFilePath(), implode(',', array_keys($transitions))));
+                } else {
+                    $this->writeInternalLog(sprintf("Failed to save scheduled transitions to %s", $this->getStateFilePath()));
+                }
+
+                // Start background worker to ensure transition is applied after delay
+                foreach ($transitions as $tkey => $entry) {
+                    if (!isset($entry['time']) || !isset($entry['final'])) {
+                        continue;
+                    }
+                    $delay = max(0, (int)$entry['time'] - time());
+                    $started = $this->startTransitionWorker($tkey, $delay, $entry['final']);
+                    if (!$started) {
+                        $this->writeInternalLog("Failed to start transition worker for $tkey");
+                    } else {
+                        $this->writeInternalLog("Started transition worker for $tkey with delay $delay");
+                    }
+                }
             }
         }
 
@@ -468,6 +509,10 @@ class DeviceEmulator
             $this->writeInternalLog("Failed to write persisted state: $path");
             return false;
         }
+        // log successful write with keys (exclude internal transitions)
+        $keys = array_keys($state);
+        if(($idx = array_search('__transitions', $keys)) !== false) { unset($keys[$idx]); }
+        $this->writeInternalLog(sprintf("Wrote persisted state to %s (keys: %s)", $path, implode(',', $keys)));
         return true;
     }
 
@@ -482,6 +527,43 @@ class DeviceEmulator
         }
         $msg = sprintf("[%s] %s\n", date('c'), $message);
         @file_put_contents($logPath, $msg, FILE_APPEND | LOCK_EX);
+    }
+
+    /**
+     * Start a detached PHP worker to apply a transition after a delay.
+     * Returns true if the worker launch was attempted.
+     */
+    private function startTransitionWorker(string $key, int $delaySeconds, $finalValue): bool
+    {
+        $persistPath = $this->getStateFilePath();
+        $worker = __DIR__ . '/scripts/transition_worker.php';
+        if (!file_exists($worker)) {
+            $this->writeInternalLog("transition worker missing: $worker");
+            return false;
+        }
+
+        $php = PHP_BINARY;
+        $args = [
+            $persistPath,
+            $key,
+            (string)$delaySeconds,
+            (string)$finalValue,
+        ];
+        $esc = array_map('escapeshellarg', $args);
+        $cmd = escapeshellarg($php) . ' ' . escapeshellarg($worker) . ' ' . implode(' ', $esc);
+
+        // Launch detached depending on OS
+        if (PHP_OS_FAMILY === 'Windows') {
+            // start /B php script args
+            $cmd = 'start /B ' . $cmd;
+            pclose(popen($cmd, 'r'));
+            return true;
+        } else {
+            // POSIX: run in background
+            $cmd = $cmd . ' > /dev/null 2>&1 &';
+            exec($cmd);
+            return true;
+        }
     }
 
     /**
