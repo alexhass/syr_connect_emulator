@@ -193,8 +193,6 @@ Devices are automatically selected via URL prefix:
 - `/neosoft/*` → Syr Neosoft 2500
 - `/trio/*` → Syr Trio DFR LS
 
-No environment variables required!
-
 ### API Endpoints
 
 #### 1. Login (required before GET)
@@ -417,11 +415,6 @@ grep "| trio |" set_operations.log
 
 You can use the URL parameter `config` to switch the JSON device file for each device type. The selection is persistent until changed again.
 
-**Supported patterns:**
-
-- For Neosoft: `neosoft*.json` (e.g. `neosoft2500.json`, `neosoft5000.json`)
-- For Trio: `safetech*.json` and `trio*.json` (e.g. `safetech.json`, `safetech_v4.json`, `trio.json`)
-
 **Neosoft Examples:**
 
 ```bash
@@ -462,7 +455,7 @@ curl "http://localhost:5333/trio/get/all?config=sanibel_leakprotection.json"
 After calling with ?config=... once, the selection will be used for all following requests (without parameter) until changed again.
 
 **Default:**
-If no parameter is set, the default file is used (`neosoft2500.json` or `safetech.json`), unless another selection is saved.
+If no parameter is set, the default file is used (`neosoft2500.json` or `safetechplus.json`), unless another selection is saved.
 
 **Note:** The JSON file must exist in the `devices/` directory.
 
@@ -472,6 +465,7 @@ If no parameter is set, the default file is used (`neosoft2500.json` or `safetec
 
 Device data is stored in JSON files under `devices/`:
 
+- `devices/pontos.json` - Pontos Base
 - `devices/neosoft2500.json` - Neosoft 2500
 - `devices/trio.json` - Trio DFR/LS
 
@@ -588,6 +582,7 @@ ls -la devices/
    ```php
    $fixtureMap = [
        'neosoft' => __DIR__ . '/devices/neosoft2500.json',
+       'pontos-base' => __DIR__ . '/devices/pontos.json',
        'trio' => __DIR__ . '/devices/trio.json',
        'new_device' => __DIR__ . '/devices/new_device.json',  // NEW
    ];
@@ -596,13 +591,13 @@ ls -la devices/
 3. Adjust regex in `index.php`:
 
    ```php
-   if (preg_match('#^(neosoft|trio|new_device)/#', $path, $matches)) {
+   if (preg_match('#^(neosoft|pontos-base|trio|new_device)/#', $path, $matches)) {
    ```
 
 4. Extend RewriteRule in `.htaccess`:
 
    ```apache
-   RewriteRule ^(neosoft|trio|new_device)/(.*)$ index.php [QSA,L]
+   RewriteRule ^(neosoft|pontos-base|trio|new_device)/(.*)$ index.php [QSA,L]
    ```
 
 5. Test:
