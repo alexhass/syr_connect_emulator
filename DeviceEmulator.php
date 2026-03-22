@@ -119,12 +119,19 @@ class DeviceEmulator
         // Some devices require login first
         // For testing, we'll allow it without login but log a warning
         if (!$this->isLoggedIn) {
-            $logPath = __DIR__ . '/logs/emulator_internal.log';
-            if (!is_dir(dirname($logPath))) {
-                @mkdir(dirname($logPath), 0777, true);
+            // Only log this warning for pontos devices or safetech_v4* fixtures
+            $fixtureName = basename($this->fixturePath ?? '');
+            // Log for pontos devices or safetech_v4 fixtures. Combine checks into one expression.
+            $shouldLog = ($this->deviceType === 'pontos-base') || (bool) preg_match('/^(pontos|safetech_v4)/i', $fixtureName);
+
+            if ($shouldLog) {
+                $logPath = __DIR__ . '/logs/emulator_internal.log';
+                if (!is_dir(dirname($logPath))) {
+                    @mkdir(dirname($logPath), 0777, true);
+                }
+                $msg = sprintf("[%s] WARNING: /get/all accessed without prior login | device=%s | fixture=%s\n", date('c'), $this->deviceType, $fixtureName);
+                @file_put_contents($logPath, $msg, FILE_APPEND | LOCK_EX);
             }
-            $msg = sprintf("[%s] WARNING: /get/all accessed without prior login | device=%s\n", date('c'), $this->deviceType);
-            @file_put_contents($logPath, $msg, FILE_APPEND | LOCK_EX);
         }
 
         $response = json_encode($this->deviceData, JSON_PRETTY_PRINT);
