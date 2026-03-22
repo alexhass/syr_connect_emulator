@@ -238,6 +238,15 @@ class DeviceEmulator
 
         // Update the value (convert type if needed)
         $newValue = $this->convertValue($value, $oldValue);
+        // Special case: for ALA, WRN, NOT a numeric 255 should be stored as hex "FF"
+        $upperKey = strtoupper($key);
+        if (in_array($upperKey, ['ALA', 'WRN', 'NOT'], true)) {
+            // If the incoming raw value or converted value represents 255, convert to hex
+            if ((is_numeric($value) && (int)$value === 255) || (is_int($newValue) && $newValue === 255) || ($newValue === '255')) {
+                $newValue = sprintf('%02x', 255);
+            }
+        }
+
         $this->deviceData[$getKey] = $newValue;
 
         // Log the operation
