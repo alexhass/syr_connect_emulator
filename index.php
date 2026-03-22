@@ -66,17 +66,34 @@ if (preg_match('#^(neosoft|trio|pontos-base)/#', $path, $matches)) {
 // Persistente Auswahl für JSON-Dateien pro deviceType
 $configFile = null;
 $persistFile = null;
-if ($deviceType === 'trio' || $deviceType === 'neosoft') {
+if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base'], true)) {
     $persistFile = __DIR__ . '/config_selection_' . $deviceType . '.txt';
-    $pattern = $deviceType === 'trio' ? '/^(safetech|trio).*\\.json$/' : '/^neosoft.*\\.json$/';
-    if (isset($_GET['config']) && preg_match($pattern, $_GET['config'])) {
-        $configFile = $_GET['config'];
-        // Schreibe Auswahl persistent
-        file_put_contents($persistFile, $configFile);
+    // Accept any existing JSON fixture in the devices folder. Use basename()
+    // to avoid directory traversal and require the file to exist.
+    if (isset($_GET['config'])) {
+        $rawConfig = $_GET['config'];
+        $lc = strtolower($rawConfig);
+        // Special values to reset to default
+        if (in_array($lc, ['default'], true)) {
+            if (file_exists($persistFile)) {
+                @unlink($persistFile);
+            }
+            $configFile = null; // force default fixture
+        } else {
+            $candidate = basename($rawConfig);
+            $customPath = __DIR__ . '/devices/' . $candidate;
+            if (file_exists($customPath)) {
+                $configFile = $candidate;
+                // Schreibe Auswahl persistent
+                file_put_contents($persistFile, $configFile);
+            }
+        }
     } elseif ($persistFile && file_exists($persistFile)) {
         $saved = trim(file_get_contents($persistFile));
-        if (preg_match($pattern, $saved)) {
-            $configFile = $saved;
+        $savedBasename = basename($saved);
+        $customPath = __DIR__ . '/devices/' . $savedBasename;
+        if (file_exists($customPath)) {
+            $configFile = $savedBasename;
         }
     }
 }

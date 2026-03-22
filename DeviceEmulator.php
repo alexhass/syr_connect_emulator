@@ -49,12 +49,12 @@ class DeviceEmulator
             'trio' => __DIR__ . '/devices/safetechplus.json',
         ];
 
-        // Prüfe, ob configFile gesetzt und gültig ist
+        // If a config file was provided, accept any existing JSON fixture in devices/
         $fixturePath = $fixtureMap[$this->deviceType] ?? $fixtureMap['neosoft'];
         if ($this->configFile) {
-            $customPath = __DIR__ . '/devices/' . basename($this->configFile);
-            $pattern = $this->deviceType === 'trio' ? '/^(safetech|trio).*\\.json$/' : ($this->deviceType === 'neosoft' ? '/^neosoft.*\\.json$/' : ($this->deviceType === 'pontos-base' ? '/^pontos.*\\.json$/' : null));
-            if ($pattern && preg_match($pattern, $this->configFile) && file_exists($customPath)) {
+            $customBasename = basename($this->configFile);
+            $customPath = __DIR__ . '/devices/' . $customBasename;
+            if (file_exists($customPath)) {
                 $fixturePath = $customPath;
             }
         }
@@ -333,6 +333,17 @@ class DeviceEmulator
         
         // Remove ALL default headers
         header_remove();
+        
+        // Add a custom header that exposes which JSON fixture was used.
+        // Prefer the actual loaded fixture path, fall back to the requested config filename,
+        // otherwise indicate 'default'. This helps debugging which file was returned.
+        $configName = 'default';
+        if (!empty($this->fixturePath)) {
+            $configName = basename($this->fixturePath);
+        } elseif (!empty($this->configFile)) {
+            $configName = basename($this->configFile);
+        }
+        header('X-Emulator-Config: ' . $configName, true);
         
         // Calculate content length and send ONLY content-length header (lowercase)
         // The body already has \r\n from json_encode, add extra \r\n

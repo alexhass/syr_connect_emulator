@@ -417,14 +417,26 @@ You can use the URL parameter `config` to switch the JSON device file for each d
 - For Neosoft: `neosoft*.json` (e.g. `neosoft2500.json`, `neosoft5000.json`)
 - For Trio: `safetech*.json` and `trio*.json` (e.g. `safetech.json`, `safetech_v4.json`, `trio.json`)
 
-**Examples:**
+**Neosoft Examples:**
 
 ```bash
 # Activate Neosoft 2500 (NeoSoft) - Default
+curl "http://localhost:5333/neosoft/get/all?config=default"
 curl "http://localhost:5333/neosoft/get/all?config=neosoft2500.json"
 
 # Activate Neosoft 5000 (NeoSoft)
 curl "http://localhost:5333/neosoft/get/all?config=neosoft5000.json"
+
+# Activate Sanibel Softwater UNO (NeoSoft 2500)
+curl "http://localhost:5333/neosoft/get/all?config=sanibel_softwater_uno.json"
+```
+
+**Trio Examples:**
+
+```bash
+# Activate safetechplus.json (Trio) - Default
+curl "http://localhost:5333/trio/get/all?config=default"
+curl "http://localhost:5333/trio/get/all?config=safetechplus.json"
 
 # Activate Safetech V4 (Trio)
 curl "http://localhost:5333/trio/get/all?config=safetech_v4_copy.json"
@@ -435,14 +447,8 @@ curl "http://localhost:5333/trio/get/all?config=safetech_v4.json"
 # Activate safetech.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=safetech.json"
 
-# Activate safetechplus.json (Trio) - Default
-curl "http://localhost:5333/trio/get/all?config=safetechplus.json"
-
 # Activate trio.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=trio.json"
-
-# Activate Sanibel Softwater UNO (NeoSoft 2500)
-curl "http://localhost:5333/neosoft/get/all?config=sanibel_softwater_uno.json"
 
 # Activate Sanibel Leak protection module A25 (Trio)
 curl "http://localhost:5333/trio/get/all?config=sanibel_leakprotection.json"
