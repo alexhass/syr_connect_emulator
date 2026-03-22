@@ -78,8 +78,16 @@ class DeviceEmulator
         // Merge any persisted runtime state (SET operations) so GET returns the updated values.
         $persisted = $this->loadPersistedState();
         if (!empty($persisted) && is_array($persisted)) {
+            // Apply any pending transitions first (this may update deviceData and persisted)
+            $this->applyPendingTransitions($persisted);
+
             // Persisted state contains get-keys (e.g., getAB) => value
-            $this->deviceData = array_replace($this->deviceData, $persisted);
+            // Exclude internal '__transitions' key when merging values
+            $merge = $persisted;
+            if (isset($merge['__transitions'])) {
+                unset($merge['__transitions']);
+            }
+            $this->deviceData = array_replace($this->deviceData, $merge);
         }
     }
 
@@ -229,6 +237,32 @@ class DeviceEmulator
             $this->writeInternalLog("Failed to persist state for $getKey");
         }
 
+        // Special behavior: changes to AB should modify VLV with a delayed transition
+        // If AB changed from false->true: set getVLV = 11 now, schedule ->10 after 30s
+        // If AB changed from true->false: set getVLV = 21 now, schedule ->20 after 30s
+        if ($getKey === 'getAB') {
+            $vlvKey = 'getVLV';
+            $now = time();
+            $transitions = $persisted['__transitions'] ?? [];
+
+            if ($oldValue === false && $newValue === true) {
+                // immediate
+                $this->deviceData[$vlvKey] = 11;
+                $persisted[$vlvKey] = 11;
+                // schedule final value 10
+                $transitions[$vlvKey] = ['time' => $now + 30, 'final' => 10];
+            } elseif ($oldValue === true && $newValue === false) {
+                $this->deviceData[$vlvKey] = 21;
+                $persisted[$vlvKey] = 21;
+                $transitions[$vlvKey] = ['time' => $now + 30, 'final' => 20];
+            }
+
+            if (!empty($transitions)) {
+                $persisted['__transitions'] = $transitions;
+                $this->savePersistedState($persisted);
+            }
+        }
+
         // Return success
         $response = json_encode([$responseKey => 'OK']);
         $this->sendRawResponse($response);
@@ -374,6 +408,48 @@ class DeviceEmulator
             return [];
         }
         return $data;
+    }
+
+    /**
+     * Apply any pending transitions stored in persisted state.
+     * Transitions are stored under '__transitions' => [ key => ['time'=>timestamp, 'final'=>value], ... ]
+     */
+    private function applyPendingTransitions(array &$persisted): void
+    {
+        $changed = false;
+        $now = time();
+        $transitions = $persisted['__transitions'] ?? [];
+        if (!is_array($transitions) || empty($transitions)) {
+            return;
+        }
+
+        foreach ($transitions as $tkey => $entry) {
+            if (!isset($entry['time']) || !isset($entry['final'])) {
+                continue;
+            }
+            if ($entry['time'] <= $now) {
+                // apply final value
+                $this->deviceData[$tkey] = $entry['final'];
+                $persisted[$tkey] = $entry['final'];
+                unset($transitions[$tkey]);
+                $changed = true;
+            } else {
+                // not yet: ensure deviceData reflects the current persisted immediate value if present
+                if (isset($persisted[$tkey])) {
+                    $this->deviceData[$tkey] = $persisted[$tkey];
+                }
+            }
+        }
+
+        if ($changed) {
+            // update persisted transitions
+            if (!empty($transitions)) {
+                $persisted['__transitions'] = $transitions;
+            } else {
+                unset($persisted['__transitions']);
+            }
+            $this->savePersistedState($persisted);
+        }
     }
 
     /**
