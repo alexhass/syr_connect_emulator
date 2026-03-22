@@ -130,7 +130,7 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base'], true)) {
                 'setFILE' => $reportedFile,
                 'setSAVED' => $savedOk === true,
             ];
-            $responseJson = json_encode($responseObj);
+            $responseJson = json_encode($responseObj, JSON_PRETTY_PRINT);
 
             // Minimal headers to match emulator behavior
             http_response_code(200);
