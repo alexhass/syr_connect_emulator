@@ -268,18 +268,19 @@ class DeviceEmulator
             $this->writeInternalLog(sprintf("Persisted state saved (%s): %s", $this->getStateFilePath(), implode(',', $keys)));
         }
 
-        // If SV1 changed, derive SS1 = SV1 * 2 (integers only) and persist it as well
-        if ($getKey === 'getSV1') {
-            $ss1Key = 'getSS1';
-            // No floats expected — use integer multiplication
-            $ss1Val = (int)$newValue * 2;
-            $this->deviceData[$ss1Key] = $ss1Val;
-            $persisted[$ss1Key] = $ss1Val;
+        // If SV1, SV2 or SV3 changed, derive corresponding SSx = SVx * 2 (integers only) and persist
+        if (preg_match('/^getSV([1-3])$/', $getKey, $m)) {
+            $idx = $m[1];
+            $ssKey = 'getSS' . $idx;
+            // Use multiplier 2.3 and round to nearest integer
+            $ssVal = (int) round((float)$newValue * 2.3);
+            $this->deviceData[$ssKey] = $ssVal;
+            $persisted[$ssKey] = $ssVal;
             $savedSs = $this->savePersistedState($persisted);
             if ($savedSs) {
-                $this->writeInternalLog(sprintf("Derived %s=%s from %s=%s", $ss1Key, $ss1Val, $getKey, (string)$newValue));
+                $this->writeInternalLog(sprintf("Derived %s=%s from %s=%s", $ssKey, $ssVal, $getKey, (string)$newValue));
             } else {
-                $this->writeInternalLog(sprintf("Failed to persist derived %s for %s", $ss1Key, $getKey));
+                $this->writeInternalLog(sprintf("Failed to persist derived %s for %s", $ssKey, $getKey));
             }
         }
 
