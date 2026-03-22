@@ -348,7 +348,10 @@ class DeviceEmulator
      */
     private function getStateFilePath(): string
     {
-        return __DIR__ . '/configs/persisted_' . $this->deviceType . '.json';
+        // Prefer using the actual fixture basename so persisted state is tied to the
+        // concrete JSON fixture file (e.g., persisted_neosoft2500.json).
+        $base = basename($this->fixturePath ?? ($this->configFile ?? ($this->deviceType . '.json')));
+        return __DIR__ . '/configs/persisted_' . $base;
     }
 
     /**

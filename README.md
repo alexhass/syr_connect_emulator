@@ -402,7 +402,7 @@ tail -f set_operations.log
 ## Persisted Runtime State
 
 - **What:** SET operations are persisted per-device so values remain across requests and restarts.
-- **Location:** Persisted state files are written to `configs/persisted_<device>.json` (for example `configs/persisted_neosoft.json`).
+- **Location:** Persisted state files are written to `configs/persisted_<fixture_basename>` (for example `configs/persisted_neosoft2500.json`).
 - **Behavior:** On startup the emulator merges the persisted state into the fixture JSON so `GET /.../get/all` returns the updated values.
 - **Errors:** Read/write failures are logged to `logs/emulator_internal.log`.
 
