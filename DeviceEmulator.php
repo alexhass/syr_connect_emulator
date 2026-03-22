@@ -284,6 +284,38 @@ class DeviceEmulator
             }
         }
 
+        // If SVx decreased past thresholds, auto-set warnings/alarms
+        // When getSVx falls to <=5 -> set getWRN = '02'
+        // When getSVx falls to <=2 -> set getALA = '0d'
+        if (preg_match('/^getSV([1-3])$/', $getKey)) {
+            $intNew = (int)$newValue;
+            $intOld = is_numeric($oldValue) ? (int)$oldValue : (int)$oldValue;
+
+            if ($intNew <= 5 && $intOld > 5) {
+                $wrnKey = 'getWRN';
+                $this->deviceData[$wrnKey] = '02';
+                $persisted[$wrnKey] = '02';
+                $savedWarn = $this->savePersistedState($persisted);
+                if ($savedWarn) {
+                    $this->writeInternalLog(sprintf("Auto-set %s=%s due to %s=%s", $wrnKey, '02', $getKey, (string)$newValue));
+                } else {
+                    $this->writeInternalLog(sprintf("Failed to persist auto-set %s for %s", $wrnKey, $getKey));
+                }
+            }
+
+            if ($intNew <= 2 && $intOld > 2) {
+                $alaKey = 'getALA';
+                $this->deviceData[$alaKey] = '0d';
+                $persisted[$alaKey] = '0d';
+                $savedAla = $this->savePersistedState($persisted);
+                if ($savedAla) {
+                    $this->writeInternalLog(sprintf("Auto-set %s=%s due to %s=%s", $alaKey, '0d', $getKey, (string)$newValue));
+                } else {
+                    $this->writeInternalLog(sprintf("Failed to persist auto-set %s for %s", $alaKey, $getKey));
+                }
+            }
+        }
+
         // Special behavior: changes to AB should modify VLV with a delayed transition
         // If AB changed from false->true: set getVLV = 11 now, schedule ->10 after 30s
         // If AB changed from true->false: set getVLV = 21 now, schedule ->20 after 30s
