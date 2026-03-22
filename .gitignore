@@ -1,6 +1,7 @@
 # Runtime folders
 /logs/
 /configs/
+/.mypy_cache/
 php_errors.log
 
 # OS files
