@@ -189,8 +189,9 @@ tests/test_validation.sh          # Linux/macOS
 
 Devices are automatically selected via URL prefix:
 
-- `/neosoft/*` → Neosoft 2500
-- `/trio/*` → Trio DFR LS
+- `/pontos-base/*` → Hansgrohe Pontos Base
+- `/neosoft/*` → Syr Neosoft 2500
+- `/trio/*` → Syr Trio DFR LS
 
 No environment variables required!
 
@@ -206,7 +207,7 @@ The emulator exposes the legacy ADM login endpoint used by some device firmwares
 Examples:
 
 ```bash
-# Neosoft (most neosoft fixtures do NOT support ADM -> return 404)
+# Neosoft (neosoft fixtures do NOT support ADM -> return 404)
 curl -I "http://localhost:5333/neosoft/set/ADM/(2)f"
 
 # Trio (safetech_v4* supports ADM and returns 200)
@@ -229,6 +230,10 @@ Not Found
 #### 2. Get All Values (GET)
 
 ```bash
+# Pontos
+curl -X GET "http://localhost:5333/pontos-base/set/ADM/(2)f"
+curl -X GET "http://localhost:5333/pontos-base/get/all"
+
 # Neosoft
 curl -X GET "http://localhost:5333/neosoft/get/all"
 
