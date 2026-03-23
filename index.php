@@ -219,6 +219,47 @@ if (preg_match('#^(neosoft|trio|pontos-base)/#', $path, $matches)) {
 // Initialize device emulator, übergebe ggf. configFile
 $emulator = new DeviceEmulator($deviceType, $logFile, $configFile);
 
+// Enforce casing rules: the command segment MUST be exactly `set` or `get` (lowercase).
+// Any deviation results in an empty 404 response.
+$parts = explode('/', $path);
+if (isset($parts[1])) {
+    $cmdRaw = $parts[1];
+    if ($cmdRaw !== 'set' && $cmdRaw !== 'get') {
+        http_response_code(404);
+        header_remove();
+        header('content-length: 0', true);
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+        exit;
+    }
+    // Enforce that the key segment (third segment) is lowercase, except ADM which must be uppercase
+    if (isset($parts[2])) {
+        $keyRaw = $parts[2];
+        if (strtolower($keyRaw) === 'adm') {
+            if ($keyRaw !== 'ADM') {
+                http_response_code(404);
+                header_remove();
+                header('content-length: 0', true);
+                if (function_exists('fastcgi_finish_request')) {
+                    fastcgi_finish_request();
+                }
+                exit;
+            }
+        } else {
+            if ($keyRaw !== strtolower($keyRaw)) {
+                http_response_code(404);
+                header_remove();
+                header('content-length: 0', true);
+                if (function_exists('fastcgi_finish_request')) {
+                    fastcgi_finish_request();
+                }
+                exit;
+            }
+        }
+    }
+}
+
 // Route the request
 if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
     // Login endpoint
