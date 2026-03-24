@@ -217,8 +217,8 @@ async def main():
     base_url = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:5333"
     device = sys.argv[2] if len(sys.argv) > 2 else "neosoft"
 
-    if device not in ["neosoft", "trio"]:
-        print(f"Error: Invalid device '{device}'. Use: neosoft or trio")
+    if device not in ["neosoft", "trio", "safe-tec"]:
+        print(f"Error: Invalid device '{device}'. Use: neosoft, trio or safe-tec")
         sys.exit(1)
 
     async with SyrEmulatorTest(base_url, device) as test:

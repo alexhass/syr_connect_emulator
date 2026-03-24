@@ -21,13 +21,8 @@ class DeviceEmulator
     /**
      * Constructor
      * 
-     * @param string $deviceType Device type: 'neosoft' or 'trio'
+     * @param string $deviceType Device type: 'neosoft', 'trio' or 'safe-tec'
      * @param string $logFile Path to log file for SET operations
-     */
-    /**
-     * @param string $deviceType
-     * @param string $logFile
-     * @param string|null $configFile Optional: explizite JSON-Datei für safetech
      */
     public function __construct(string $deviceType, string $logFile, ?string $configFile = null)
     {
@@ -46,6 +41,7 @@ class DeviceEmulator
         $fixtureMap = [
             'neosoft' => __DIR__ . '/devices/neosoft2500.json',
             'pontos-base' => __DIR__ . '/devices/pontos.json',
+            'safe-tec' => __DIR__ . '/devices/safetech_v4_copy.json',
             'trio' => __DIR__ . '/devices/safetechplus.json',
         ];
 
@@ -136,8 +132,8 @@ class DeviceEmulator
         if (!$this->isLoggedIn) {
             // Only log this warning for pontos devices or safetech_v4* fixtures
             $fixtureName = basename($this->fixturePath ?? '');
-            // Log for pontos devices or safetech_v4 fixtures. Combine checks into one expression.
-            $shouldLog = ($this->deviceType === 'pontos-base') || (bool) preg_match('/^(pontos|safetech_v4)/i', $fixtureName);
+            // Log for pontos devices, safetech_v4 fixtures or safe-tec devices. Combine checks into one expression.
+            $shouldLog = ($this->deviceType === 'pontos-base' || $this->deviceType === 'safe-tec') || (bool) preg_match('/^(pontos|safetech_v4)/i', $fixtureName);
 
             if ($shouldLog) {
                 $logPath = __DIR__ . '/logs/emulator_internal.log';
