@@ -20,28 +20,35 @@ Write-Host "Running example API tests against $BaseUrl/$Device"
 # Embedded example tests (self-contained)
 # Device-specific arrays: edit these lists if you need to add/remove per device
 $tests_neosoft = @(
-    '/set/pa3/true|setPA3|true'
-    '/set/pv1/500|setPV1|500'
-    '/set/prf/2|getPRF|2'
-    '/get/prf|getPRF|2'
-    '/set/dtt/04%3A00|setDTT|"04:00"'
-    '/set/rmo/4|setRMO4|true'
-    '/set/rpd/2|setRPD2|true'
-    '/set/rpd/99|setRPD99|"MIMA"'
+    '/get/ala|getALA|"ff"'
     '/set/ala/255|setALA255|"OK"'
     '/set/ala/ff|setALAff|"OK"'
     '/set/ala/FF|setALAFF|"OK"'
-    '/get/ala|getALA|"ff"'
+    '/set/dtt/04%3A00|setDTT|"04:00"'
+    '/set/rmo/1|setRMO4|true'
+    '/set/rmo/4|setRMO4|true'
+    '/set/rpd/99|setRPD99|"MIMA"'
+    '/set/rpd/2|setRPD2|true'
+    '/set/rpd/3|setRPD3|true'
     '/set/slp/7|setSLP7|"OK"'
+    '/set/slp/0|setSLP0|"OK"'
 )
 
 $tests_trio = @(
     '/set/ab/true|setAB|true'
-    '/get/iwh|getIWH|INT'
-    '/get/srh|getSRH|DATE'
+    '/set/ab/false|setAB|false'
     '/get/alm|getALM|HEXLIST'
-    '/get/xyz|getXYZ|"NSC"'
+    '/get/iwh|getIWH|INT'
+    '/set/pa1/true|setPA1|true'
+    '/set/pa2/true|setPA2|true'
+    '/set/pa3/true|setPA3|true'
+    '/set/pa4/false|setPA4|false'
+    '/get/prf|getPRF|2'
+    '/set/prf/2|getPRF|2'
+    '/set/pv1/500|setPV1|500'
+    '/get/srh|getSRH|DATE'
     '/get/vlv|getVLV|VLVSET'
+    '/get/xyz|getXYZ|"NSC"'
 )
 
 # Select tests based on device name (case-insensitive). If unknown, run all tests.
