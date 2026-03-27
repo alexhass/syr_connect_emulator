@@ -1,20 +1,25 @@
 #!/usr/bin/env pwsh
 # PowerShell port of tests/test_examples.sh
 param(
-    [string]$BaseUrl = $env:BASE_URL -or 'http://localhost:5333',
-    [string]$Device = $env:DEVICE -or 'neosoft'
+    [string]$BaseUrl = $env:BASE_URL,
+    [string]$Device = $env:DEVICE
 )
 
+# Ensure defaults when environment variables are not set (avoid using -or which returns boolean)
+if (-not $BaseUrl) { $BaseUrl = 'http://localhost:5333' }
+if (-not $Device)  { $Device  = 'neosoft' }
+
 Set-StrictMode -Version Latest
-
 $LogFile = Join-Path $PSScriptRoot 'examples.log'
-$FailDir = Join-Path $PSScriptRoot 'failures'
-If (-not (Test-Path $FailDir)) { New-Item -ItemType Directory -Path $FailDir | Out-Null }
 
+# Device label is used only for log naming; the script is self-contained and does not require
+# any external device fixture files. All example requests and expected tokens are embedded below.
 Write-Host "Logging to: $LogFile"
 Write-Host "Running example API tests against $BaseUrl/$Device"
 
-$tests = @(
+# Embedded example tests (self-contained)
+# Device-specific arrays: edit these lists if you need to add/remove per device
+$tests_neosoft = @(
     '/set/pa3/true|setPA3|true'
     '/set/pv1/500|setPV1|500'
     '/set/prf/2|getPRF|2'
@@ -23,19 +28,31 @@ $tests = @(
     '/set/rmo/4|setRMO4|true'
     '/set/rpd/2|setRPD2|true'
     '/set/rpd/99|setRPD99|"MIMA"'
+    '/set/ala/255|setALA255|"OK"'
+    '/set/ala/ff|setALAff|"OK"'
+    '/set/ala/FF|setALAFF|"OK"'
+    '/get/ala|getALA|"ff"'
+    '/set/slp/7|setSLP7|"OK"'
+)
+
+$tests_trio = @(
+    '/set/ab/true|setAB|true'
     '/get/iwh|getIWH|INT'
     '/get/srh|getSRH|DATE'
     '/get/alm|getALM|HEXLIST'
     '/get/xyz|getXYZ|"NSC"'
-    '/set/ala/255|setALA255|"OK"'
-    '/get/ala|getALA|"ff"'
-    '/set/ab/true|setAB|true'
     '/get/vlv|getVLV|VLVSET'
-    '/set/slp/7|setSLP7|"OK"'
 )
 
+# Select tests based on device name (case-insensitive). If unknown, run all tests.
+switch ($Device.ToLower()) {
+    'neosoft' { $filteredTests = $tests_neosoft }
+    'trio'    { $filteredTests = $tests_trio }
+    default   { $filteredTests = $tests_neosoft + $tests_trio }
+}
+
 $passed = 0; $failed = 0; $idx = 0
-foreach ($t in $tests) {
+foreach ($t in $filteredTests) {
     $idx++
     $parts = $t -split '\|',3
     $path = $parts[0]
@@ -47,11 +64,13 @@ foreach ($t in $tests) {
     try {
         $resp = Invoke-WebRequest -Uri $url -UseBasicParsing -ErrorAction Stop
         $status = $resp.StatusCode
-        $body = $resp.Content
-        try { $json = $body | ConvertFrom-Json -ErrorAction Stop } catch { $json = $null }
+        $bodyRaw = $resp.Content
+        if ($bodyRaw -is [byte[]]) { $bodyString = [System.Text.Encoding]::UTF8.GetString($bodyRaw) } else { $bodyString = $bodyRaw }
+        try { $json = $bodyString | ConvertFrom-Json -ErrorAction Stop } catch { $json = $null }
     } catch {
         $status = 0
-        $body = ''
+        $bodyString = ''
+        $bodyRaw = $null
         $json = $null
     }
 
@@ -71,6 +90,13 @@ foreach ($t in $tests) {
     if ($actual -is [string]) { $rawActual = $actual } elseif ($actual -ne $null) { $rawActual = $actual.ToString() } else { $rawActual = '' }
 
     $timestamp = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
+    # build expected_body (if special token, log token; otherwise build JSON with the key)
+    if ($expected -in @('DATE','INT','HEXLIST','VLVSET')) {
+        $expectedBody = "<$expected>"
+    } else {
+        $expectedBody = "{`"$key`":$expected}"
+    }
+
     # log
     @(
         '---'
@@ -80,9 +106,12 @@ foreach ($t in $tests) {
         "key: $key"
         "expected: $expected"
         "actual: $actualJson"
-        'body:'
-        $body
+        "expected_body: $expectedBody"
+        'response_body:'
+        $bodyString
     ) | Out-File -FilePath $LogFile -Append -Encoding utf8
+
+    # responses are recorded in the log; no separate response files written
 
     $pass = $false
     switch ($expected) {
@@ -110,14 +139,11 @@ foreach ($t in $tests) {
     } else {
         Write-Host 'FAIL'
         $failed++
-        $failFile = Join-Path $FailDir "example_fail_$idx.json"
-        $body | Out-File -FilePath $failFile -Encoding utf8
+        # Response body already logged; no separate failure file created
         @(
             "FAILURE: $path"
-            "Saved response to: $failFile"
         ) | Out-File -FilePath $LogFile -Append -Encoding utf8
         Write-Host "  URL: $url"
-        Write-Host "  Response saved: $failFile"
         Write-Host "  Expected: $key -> $expected"
         Write-Host "  Actual:   $key -> $actualJson"
     }
