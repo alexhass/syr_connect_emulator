@@ -209,8 +209,11 @@ class DeviceEmulator
 
         // Check if key exists in device data
         if (!array_key_exists($getKey, $this->deviceData)) {
+            // Key not found - emulate real device behavior: return NSC (Not a valid command)
             $this->logOperation('SET_ERROR', $key, $value, "Key not found: $getKey");
-            $this->sendError(400, "Unknown device key: $key");
+            $responseKey = 'set' . strtoupper($key) . $value;
+            $response = json_encode([$responseKey => 'NSC']);
+            $this->sendRawResponse($response);
             return;
         }
 
