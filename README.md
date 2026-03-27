@@ -255,13 +255,13 @@ Response:
 
 ```bash
 # Get specific value (e.g., valve state)
-curl -X GET "http://localhost:5333/neosoft/get/AB"
+curl -X GET "http://localhost:5333/neosoft/get/ab"
 
 # Get flow rate
-curl -X GET "http://localhost:5333/neosoft/get/FLO"
+curl -X GET "http://localhost:5333/neosoft/get/flo"
 
 # Get salt amount
-curl -X GET "http://localhost:5333/neosoft/get/SV1"
+curl -X GET "http://localhost:5333/neosoft/get/sv1"
 ```
 
 **Success response (key exists):**
@@ -286,24 +286,24 @@ curl -X GET "http://localhost:5333/neosoft/get/SV1"
 
 ```bash
 # Close valve (Neosoft)
-curl -X GET "http://localhost:5333/neosoft/set/AB/true"
+curl -X GET "http://localhost:5333/neosoft/set/ab/true"
 
 # Change regeneration time (Neosoft) - URL encoded value e.g. "03:30"
-curl -X GET "http://localhost:5333/neosoft/set/RTM/03%3A30"
+curl -X GET "http://localhost:5333/neosoft/set/rtm/03%3A30"
 
 # Set salt amount (Neosoft)
-curl -X GET "http://localhost:5333/neosoft/set/SV1/25"
+curl -X GET "http://localhost:5333/neosoft/set/sv1/25"
 
 # Switch profile (Trio)
-curl -X GET "http://localhost:5333/trio/set/PRF/2"
+curl -X GET "http://localhost:5333/trio/set/prf/2"
 ```
 
 **Response format:**
 
 The response key is generated from the path: `set` + `{key}` + `{value}` (slashes removed)
 
-- Example: `/set/SIR/0` → `{"setSIR0": "OK"}`
-- Example: `/set/AB/true` → `{"setABtrue": "OK"}`
+- Example: `/set/sir/0` → `{"setSIR0": "OK"}`
+- Example: `/set/ab/true` → `{"setABtrue": "OK"}`
 
 **Success response:**
 
@@ -324,8 +324,8 @@ The response key is generated from the path: `set` + `{key}` + `{value}` (slashe
 **Validation rules:**
 
 - `RPD` (Neosoft only): Values must be between 1-3
-  - Valid: `/set/RPD/1`, `/set/RPD/2`, `/set/RPD/3` → Returns `"OK"`
-  - Invalid: `/set/RPD/0`, `/set/RPD/4` → Returns `"MIMA"`
+  - Valid: `/set/rpd/1`, `/set/rpd/2`, `/set/rpd/3` → Returns `"OK"`
+  - Invalid: `/set/rpd/0`, `/set/rpd/4` → Returns `"MIMA"`
 
 **Testing validation:**
 
@@ -336,8 +336,8 @@ tests\test_validation.bat
 # Linux/macOS
 tests/test_validation.sh
 
-curl http://localhost:5333/neosoft/set/RPD/2   # Returns: {"setRPD2":"OK"}
-curl http://localhost:5333/neosoft/set/RPD/5   # Returns: {"setRPD5":"MIMA"}
+curl http://localhost:5333/neosoft/set/rpd/2   # Returns: {"setRPD2":"OK"}
+curl http://localhost:5333/neosoft/set/rpd/5   # Returns: {"setRPD5":"MIMA"}
 ```
 
 ### Example: Testing Home Assistant Integration
@@ -411,7 +411,7 @@ tail -f logs/set_operations.log
 1. Set a value:
 
 ```bash
-curl -i "http://localhost:5333/neosoft/set/AB/true"
+curl -i "http://localhost:5333/neosoft/set/ab/true"
 ```
 
 2. Confirm persisted value is returned by GET all:
