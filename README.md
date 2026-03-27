@@ -430,6 +430,7 @@ cat configs/persisted_neosoft.json
 To clear persisted state for a device remove its `persisted_<device>.json` file.
 tail -n 20 logs/set_operations.log
 
+```bash
 # Filter by client
 grep "192.168.1.100" logs/set_operations.log
 
@@ -466,12 +467,6 @@ curl "http://localhost:5333/neosoft/get/all?config=sanibel_softwater_uno.json"
 curl "http://localhost:5333/trio/get/all?config=default"
 curl "http://localhost:5333/trio/get/all?config=safetechplus.json"
 
-# Activate Safetech V4 (Trio)
-curl "http://localhost:5333/trio/get/all?config=safetech_v4_copy.json"
-
-# Activate Safetech V4 older firmware (Trio)
-curl "http://localhost:5333/trio/get/all?config=safetech_v4.json"
-
 # Activate safetech.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=safetech.json"
 
@@ -480,6 +475,23 @@ curl "http://localhost:5333/trio/get/all?config=trio.json"
 
 # Activate Sanibel Leak protection module A25 (Trio)
 curl "http://localhost:5333/trio/get/all?config=sanibel_leakprotection.json"
+```
+
+**Safe-Tech v4 Examples:**
+
+```bash
+# Activate Safetech V4 (Trio) - Default
+curl "http://localhost:5333/safe-tec/get/all?config=safetech_v4_copy.json"
+
+# Activate Safetech V4 older firmware (Trio)
+curl "http://localhost:5333/safe-tec/get/all?config=safetech_v4.json"
+```
+
+**Pontos-Base Examples:**
+
+```bash
+# Activate Safetech V4 (Trio) - Default
+curl "http://localhost:5333/pontos-base/get/all?config=pontos.json"
 ```
 
 After calling with ?config=... once, the selection will be used for all following requests (without parameter) until changed again.
