@@ -77,23 +77,23 @@ echo "3. Testing SET Operations"
 echo "=========================================="
 
 # Test SET with boolean
-test_endpoint "SET AB (valve) to true" "$BASE_URL/$DEVICE/set/AB/true" 200
+test_endpoint "SET AB (valve) to true" "$BASE_URL/$DEVICE/set/ab/true" 200
 
 # Test SET with string
-test_endpoint "SET RTM (regen time) to 03:30" "$BASE_URL/$DEVICE/set/RTM/03%3A30" 200
+test_endpoint "SET RTM (regen time) to 03:30" "$BASE_URL/$DEVICE/set/rtm/03%3A30" 200
 
 # Test SET with integer
-test_endpoint "SET SV1 (salt) to 25" "$BASE_URL/$DEVICE/set/SV1/25" 200
+test_endpoint "SET SV1 (salt) to 25" "$BASE_URL/$DEVICE/set/sv1/25" 200
 
 # Test SET with float
-test_endpoint "SET RPD (interval) to 3" "$BASE_URL/$DEVICE/set/RPD/3" 200
+test_endpoint "SET RPD (interval) to 3" "$BASE_URL/$DEVICE/set/rpd/3" 200
 
 echo "=========================================="
 echo "4. Testing Error Cases"
 echo "=========================================="
 
-# Test invalid key
-test_endpoint "SET invalid key" "$BASE_URL/$DEVICE/set/INVALID/123" 400
+# Test invalid key (emulator now returns NSC with HTTP 200)
+test_endpoint "SET invalid key" "$BASE_URL/$DEVICE/set/invalid/123" 200
 
 # Test invalid device prefix
 test_endpoint "Invalid device prefix" "$BASE_URL/invalid/get/all" 400

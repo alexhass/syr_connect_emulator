@@ -62,7 +62,9 @@ class SyrEmulatorTest:
 
     async def get_single(self, key: str) -> dict[str, Any]:
         """Test GET single value."""
-        url = f"{self.base_url}/{self.device}/get/{key}"
+        # Key segment must be lowercase for routing, except ADM which is uppercase
+        key_segment = key if key.upper() == 'ADM' else key.lower()
+        url = f"{self.base_url}/{self.device}/get/{key_segment}"
         print(f"\n🔍 Testing GET single: {url}")
 
         async with self.session.get(url) as resp:
@@ -73,7 +75,9 @@ class SyrEmulatorTest:
 
     async def set_value(self, key: str, value: str) -> dict[str, Any]:
         """Test SET operation."""
-        url = f"{self.base_url}/{self.device}/set/{key}/{value}"
+        # Key segment must be lowercase for routing, except ADM which is uppercase
+        key_segment = key if key.upper() == 'ADM' else key.lower()
+        url = f"{self.base_url}/{self.device}/set/{key_segment}/{value}"
         print(f"\n⚙️  Testing SET: {url}")
 
         async with self.session.get(url) as resp:

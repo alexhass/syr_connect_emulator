@@ -50,25 +50,25 @@ echo 3. Testing SET Operations
 echo ==========================================
 
 echo Testing: SET AB (valve) to true ...
-curl -s "%BASE_URL%/%DEVICE%/set/AB/true" > test_response.tmp
+curl -s "%BASE_URL%/%DEVICE%/set/ab/true" > test_response.tmp
 type test_response.tmp
 echo.
 echo.
 
 echo Testing: SET RTM (regen time) to 03:30 ...
-curl -s "%BASE_URL%/%DEVICE%/set/RTM/03%%3A30" > test_response.tmp
+curl -s "%BASE_URL%/%DEVICE%/set/rtm/03%%3A30" > test_response.tmp
 type test_response.tmp
 echo.
 echo.
 
 echo Testing: SET SV1 (salt) to 25 ...
-curl -s "%BASE_URL%/%DEVICE%/set/SV1/25" > test_response.tmp
+curl -s "%BASE_URL%/%DEVICE%/set/sv1/25" > test_response.tmp
 type test_response.tmp
 echo.
 echo.
 
 echo Testing: SET RPD (interval) to 3 ...
-curl -s "%BASE_URL%/%DEVICE%/set/RPD/3" > test_response.tmp
+curl -s "%BASE_URL%/%DEVICE%/set/rpd/3" > test_response.tmp
 type test_response.tmp
 echo.
 echo.
@@ -78,7 +78,7 @@ echo 4. Testing Error Cases
 echo ==========================================
 
 echo Testing: SET invalid key ...
-curl -s "%BASE_URL%/%DEVICE%/set/INVALID/123" > test_response.tmp
+curl -s "%BASE_URL%/%DEVICE%/set/invalid/123" > test_response.tmp
 type test_response.tmp
 echo.
 echo.

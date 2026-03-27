@@ -10,39 +10,39 @@ SET BASE_URL=http://localhost:5333
 echo Test 1: Get existing values - should return value
 echo --------------------------------------------------
 echo Getting AB (valve state):
-curl -s "%BASE_URL%/neosoft/get/AB"
+curl -s "%BASE_URL%/neosoft/get/ab"
 echo.
 echo.
 
 echo Getting FLO (flow rate):
-curl -s "%BASE_URL%/neosoft/get/FLO"
+curl -s "%BASE_URL%/neosoft/get/flo"
 echo.
 echo.
 
 echo Getting SV1 (salt amount):
-curl -s "%BASE_URL%/neosoft/get/SV1"
+curl -s "%BASE_URL%/neosoft/get/sv1"
 echo.
 echo.
 
 echo Getting RPD (regeneration period):
-curl -s "%BASE_URL%/neosoft/get/RPD"
+curl -s "%BASE_URL%/neosoft/get/rpd"
 echo.
 echo.
 
 echo Test 2: Get non-existing values - should return NSC
 echo ----------------------------------------------------
 echo Getting XYZ (invalid key):
-curl -s "%BASE_URL%/neosoft/get/XYZ"
+curl -s "%BASE_URL%/neosoft/get/xyz"
 echo.
 echo.
 
 echo Getting INVALID (invalid key):
-curl -s "%BASE_URL%/neosoft/get/INVALID"
+curl -s "%BASE_URL%/neosoft/get/invalid"
 echo.
 echo.
 
 echo Getting TEST123 (invalid key):
-curl -s "%BASE_URL%/neosoft/get/TEST123"
+curl -s "%BASE_URL%/neosoft/get/test123"
 echo.
 echo.
 
