@@ -17,7 +17,7 @@ RewriteCond %{REQUEST_FILENAME} !-d
 #   /{device}/get/all            - Get all values
 #   /{device}/get/{key}          - Get single value
 #   /{device}/set/{key}/{value}  - Set value
-RewriteRule ^(neosoft|trio|pontos-base)/(.*)$ index.php [QSA,L]
+RewriteRule ^(neosoft|safe-tec|trio|pontos-base)/(.*)$ index.php [QSA,L]
 
 # Suppress Apache default headers to match real device
 # Real device only sends: HTTP/1.1 200 OK + content-length: XX
