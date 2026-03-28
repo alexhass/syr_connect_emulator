@@ -42,7 +42,7 @@ $tests_trio = @(
     '/set/pa1/true|setPA1|true'
     '/set/pa2/true|setPA2|true'
     '/set/pa3/true|setPA3|true'
-    '/set/pa4/false|setPA4|false'
+    '/get/pa4|getPA4|false'
     '/get/prf|getPRF|2'
     '/set/prf/2|getPRF|2'
     '/set/pv1/500|setPV1|500'
