@@ -237,8 +237,18 @@ class DeviceEmulator
 
         // Update the value (convert type if needed)
         $newValue = $this->convertValue($value, $oldValue);
-        // Special case: for ALA, WRN, NOT a numeric 255 should be stored as hex "FF"
+        // Normalize RTM (regen time) to HH:MM with leading zeros when provided like "2:15"
         $upperKey = strtoupper($key);
+        if ($upperKey === 'RTM' && is_string($newValue)) {
+            if (preg_match('/^(\d{1,2}):(\d{1,2})$/', $newValue, $m)) {
+                $hh = (int)$m[1];
+                $mm = (int)$m[2];
+                if ($hh >= 0 && $hh <= 23 && $mm >= 0 && $mm <= 59) {
+                    $newValue = sprintf('%02d:%02d', $hh, $mm);
+                }
+            }
+        }
+        // Special case: for ALA, WRN, NOT a numeric 255 should be stored as hex "FF"
         if (in_array($upperKey, ['ALA', 'WRN', 'NOT'], true)) {
             // If the incoming raw value or converted value represents 255, convert to hex
             if ((is_numeric($value) && (int)$value === 255) || (is_int($newValue) && $newValue === 255) || ($newValue === '255')) {
