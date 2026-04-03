@@ -162,6 +162,7 @@ class DeviceEmulator
         // Persist any changes made by applyPendingTransitions
         $this->savePersistedState($persisted);
 
+        # WARNING: The original SYR devices return JSON without pretty print.
         $response = json_encode($this->deviceData, JSON_PRETTY_PRINT);
         $this->sendRawResponse($response);
     }
