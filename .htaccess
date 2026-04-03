@@ -6,10 +6,6 @@ RewriteEngine On
 # Set base directory (update if deployed in subdirectory)
 RewriteBase /
 
-# Don't rewrite requests for existing files or directories
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-
 # Route device-specific API requests to index.php
 # Supported devices: neosoft, trio, pontos-base
 # Supported endpoints:
@@ -17,7 +13,12 @@ RewriteCond %{REQUEST_FILENAME} !-d
 #   /{device}/get/all            - Get all values
 #   /{device}/get/{key}          - Get single value
 #   /{device}/set/{key}/{value}  - Set value
-RewriteRule ^(neosoft|safe-tec|trio|pontos-base)/(.*)$ index.php [QSA,L]
+#
+# The path is passed via the _dp query parameter so that Apache URL-encodes
+# special characters (e.g. ':' in time values like '2:00' -> '%3A00') rather
+# than running the value through Windows path normalization, which would
+# truncate it at the colon (NTFS alternate data stream syntax).
+RewriteRule ^(neosoft|safe-tec|trio|pontos-base)/(.*)$ index.php?_dp=$1/$2 [QSA,L]
 
 # Suppress Apache default headers to match real device
 # Real device only sends: HTTP/1.1 200 OK + content-length: XX

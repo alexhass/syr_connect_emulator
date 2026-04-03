@@ -32,15 +32,27 @@ header('X-Remove-Headers: true');
 
 require_once __DIR__ . '/DeviceEmulator.php';
 
-// Parse the request URI
-$requestUri = $_SERVER['REQUEST_URI'];
-$scriptName = dirname($_SERVER['SCRIPT_NAME']);
-$path = str_replace($scriptName, '', $requestUri);
-$path = parse_url($path, PHP_URL_PATH);
-$path = trim($path, '/');
-
-// Remove query string
-$path = explode('?', $path)[0];
+// Prefer the _dp query parameter injected by mod_rewrite in .htaccess.
+// Apache URL-encodes special characters in query-string values (e.g. ':' in
+// time values like '2:00' becomes '%3A00'), so Windows path normalization never
+// gets a chance to truncate the value at the colon (NTFS ADS syntax).
+// PHP's $_GET decodes percent-encoding automatically.
+if (isset($_GET['_dp']) && $_GET['_dp'] !== '') {
+    $path = trim($_GET['_dp'], '/');
+} else {
+    // Fallback for requests that bypass mod_rewrite (e.g. direct CLI execution).
+    $rawUri  = $_SERVER['REQUEST_URI'] ?? '/';
+    $qPos    = strpos($rawUri, '?');
+    $uriPath = ($qPos !== false) ? substr($rawUri, 0, $qPos) : $rawUri;
+    // Strip subdirectory prefix when the emulator is deployed in a subfolder.
+    $scriptDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+    if ($scriptDir !== '' && $scriptDir !== '.') {
+        if (strncmp($uriPath, $scriptDir, strlen($scriptDir)) === 0) {
+            $uriPath = substr($uriPath, strlen($scriptDir));
+        }
+    }
+    $path = trim($uriPath, '/');
+}
 
 // Extract device type from URL prefix
 $deviceType = null;
@@ -50,9 +62,9 @@ if (preg_match('#^(neosoft|trio|pontos-base|safe-tec)/#', $path, $matches)) {
     http_response_code(400);
     header_remove();
     $response = json_encode([
-        'error' => 'Invalid device prefix',
-        'path' => $path,
-        'message' => 'URL must start with /neosoft/, /trio/ or /pontos-base/'
+        'error'   => 'Invalid device prefix',
+        'path'    => $path,
+        'message' => 'URL must start with /neosoft/, /trio/, /pontos-base/ or /safe-tec/',
     ]);
     $bodyWithEnding = $response . "\r\n\r\n";
     header('content-length: ' . strlen($response));
@@ -186,37 +198,6 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base', 'safe-tec'], true))
 // Ensure main SET operations logfile is inside logs/
 $logFile = $logsDir . '/set_operations.log';
 
-// Parse the request URI
-$requestUri = $_SERVER['REQUEST_URI'];
-$scriptName = dirname($_SERVER['SCRIPT_NAME']);
-$path = str_replace($scriptName, '', $requestUri);
-$path = parse_url($path, PHP_URL_PATH);
-$path = trim($path, '/');
-
-// Remove query string
-$path = explode('?', $path)[0];
-
-// Extract device type from URL prefix
-$deviceType = null;
-if (preg_match('#^(neosoft|trio|pontos-base|safe-tec)/#', $path, $matches)) {
-    $deviceType = $matches[1];
-} else {
-    http_response_code(400);
-    header_remove();
-        $response = json_encode([
-        'error' => 'Invalid device prefix',
-        'path' => $path,
-        'message' => 'URL must start with /neosoft/, /trio/, /pontos-base/ or /safe-tec/'
-    ]);
-    $bodyWithEnding = $response . "\r\n\r\n";
-    header('content-length: ' . strlen($response));
-    echo $bodyWithEnding;
-    if (function_exists('fastcgi_finish_request')) {
-        fastcgi_finish_request();
-    }
-    exit;
-}
-
 // Initialize device emulator, übergebe ggf. configFile
 $emulator = new DeviceEmulator($deviceType, $logFile, $configFile);
 
@@ -275,7 +256,7 @@ if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
 } elseif (preg_match('#^[^/]+/set/([^/]+)/(.+)$#', $path, $matches)) {
     // Set operation
     $key = $matches[1];
-    $value = urldecode($matches[2]);
+    $value = $matches[2];
     $emulator->handleSet($key, $value);
 } else {
     // Unknown endpoint

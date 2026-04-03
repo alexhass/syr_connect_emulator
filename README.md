@@ -288,8 +288,8 @@ curl -X GET "http://localhost:5333/neosoft/get/sv1"
 # Close valve (Neosoft)
 curl -X GET "http://localhost:5333/neosoft/set/ab/true"
 
-# Change regeneration time (Neosoft) - URL encoded value e.g. "03:30"
-curl -X GET "http://localhost:5333/neosoft/set/rtm/03%3A30"
+# Change regeneration time (Neosoft)
+curl -X GET "http://localhost:5333/neosoft/set/rtm/03:30"
 
 # Set salt amount (Neosoft)
 curl -X GET "http://localhost:5333/neosoft/set/sv1/25"
@@ -297,6 +297,8 @@ curl -X GET "http://localhost:5333/neosoft/set/sv1/25"
 # Switch profile (Trio)
 curl -X GET "http://localhost:5333/trio/set/prf/2"
 ```
+
+> **Note:** Values are passed through as-is and are **not** URL-decoded by the emulator. Send the raw value directly in the URL path.
 
 **Response format:**
 
