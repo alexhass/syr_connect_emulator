@@ -18,6 +18,9 @@ class DeviceEmulator
     private bool $isLoggedIn = false;
     private ?string $configFile;
 
+    /** json_encode flags that match real SYR device output: compact, unescaped slashes and unicode. */
+    private const JSON_FLAGS = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE;
+
     /**
      * Constructor
      * 
@@ -115,7 +118,7 @@ class DeviceEmulator
         $this->logOperation('LOGIN', 'ADM', '(2)f');
 
         // Return success - match real device response exactly
-        $response = json_encode(['setADM(2)f' => 'OK']);
+        $response = json_encode(['setADM(2)f' => 'OK'], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
 
@@ -163,7 +166,7 @@ class DeviceEmulator
         $this->savePersistedState($persisted);
 
         # WARNING: The original SYR devices return JSON without pretty print.
-        $response = json_encode($this->deviceData, JSON_PRETTY_PRINT);
+        $response = json_encode($this->deviceData, self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
 
@@ -183,14 +186,14 @@ class DeviceEmulator
         // Check if key exists in device data
         if (!array_key_exists($getKey, $this->deviceData)) {
             // Key not found - return NSC (Not a valid command)
-            $response = json_encode([$getKey => 'NSC']);
+            $response = json_encode([$getKey => 'NSC'], self::JSON_FLAGS);
             $this->sendRawResponse($response);
             return;
         }
 
         // Return the single value
         $value = $this->deviceData[$getKey];
-        $response = json_encode([$getKey => $value]);
+        $response = json_encode([$getKey => $value], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
 
@@ -213,7 +216,7 @@ class DeviceEmulator
             // Key not found - emulate real device behavior: return NSC (Not a valid command)
             $this->logOperation('SET_ERROR', $key, $value, "Key not found: $getKey");
             $responseKey = 'set' . strtoupper($key) . $value;
-            $response = json_encode([$responseKey => 'NSC']);
+            $response = json_encode([$responseKey => 'NSC'], self::JSON_FLAGS);
             $this->sendRawResponse($response);
             return;
         }
@@ -231,7 +234,7 @@ class DeviceEmulator
         if ($validationResult !== true) {
             // Value is outside valid range
             $this->logOperation('SET_VALIDATION_ERROR', $key, $value, "Value outside valid range: $validationResult");
-            $response = json_encode([$responseKey => 'MIMA']);
+            $response = json_encode([$responseKey => 'MIMA'], self::JSON_FLAGS);
             $this->sendRawResponse($response);
             return;
         }
@@ -372,7 +375,7 @@ class DeviceEmulator
         }
 
         // Return success
-        $response = json_encode([$responseKey => 'OK']);
+        $response = json_encode([$responseKey => 'OK'], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
 
@@ -478,10 +481,10 @@ class DeviceEmulator
     {
         http_response_code($code);
         $response = json_encode([
-            'error' => $message,
-            'code' => $code,
-            'device_type' => $this->deviceType
-        ]);
+            'error'       => $message,
+            'code'        => $code,
+            'device_type' => $this->deviceType,
+        ], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
 
