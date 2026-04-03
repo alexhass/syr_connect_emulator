@@ -22,15 +22,49 @@ ini_set('default_mimetype', '');
 ini_set('expose_php', 'off');
 
 // Remove all default headers before any output
-if (function_exists('header_remove')) {
-    header_remove();
-}
+header_remove();
 
 // Prevent Apache from adding headers via PHP
 header('X-Remove-Headers: true');
 
 
 require_once __DIR__ . '/DeviceEmulator.php';
+
+/**
+ * Send a JSON response and terminate.
+ * Mirrors real SYR device behavior: content-length reflects the JSON body
+ * length; the \r\n\r\n terminator is appended but not counted.
+ *
+ * @param int    $code    HTTP status code
+ * @param string $json    Pre-encoded JSON string
+ * @param array  $headers Additional headers, e.g. ['X-Emulator-Config: foo']
+ */
+function send_json_response(int $code, string $json, array $headers = []): never
+{
+    http_response_code($code);
+    header_remove();
+    foreach ($headers as $h) {
+        header($h, true);
+    }
+    header('content-length: ' . strlen($json));
+    echo $json . "\r\n\r\n";
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+    exit;
+}
+
+/** Send an empty (no-body) response and terminate. */
+function send_empty_response(int $code): never
+{
+    http_response_code($code);
+    header_remove();
+    header('content-length: 0', true);
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+    exit;
+}
 
 // Prefer the _dp query parameter injected by mod_rewrite in .htaccess.
 // Apache URL-encodes special characters in query-string values (e.g. ':' in
@@ -59,23 +93,14 @@ $deviceType = null;
 if (preg_match('#^(neosoft|trio|pontos-base|safe-tec)/#', $path, $matches)) {
     $deviceType = $matches[1];
 } else {
-    http_response_code(400);
-    header_remove();
-    $response = json_encode([
+    send_json_response(400, json_encode([
         'error'   => 'Invalid device prefix',
         'path'    => $path,
         'message' => 'URL must start with /neosoft/, /trio/, /pontos-base/ or /safe-tec/',
-    ]);
-    $bodyWithEnding = $response . "\r\n\r\n";
-    header('content-length: ' . strlen($response));
-    echo $bodyWithEnding;
-    if (function_exists('fastcgi_finish_request')) {
-        fastcgi_finish_request();
-    }
-    exit;
+    ]));
 }
 
-// Persistente Auswahl für JSON-Dateien pro deviceType
+// Persistent fixture file selection per device type
 $configFile = null;
 $persistFile = null;
 // Ensure runtime folders exist for persisted configs and logs
@@ -125,7 +150,7 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base', 'safe-tec'], true))
                 $customPath = __DIR__ . '/devices/' . $candidate;
                 if (file_exists($customPath)) {
                     $configFile = $candidate;
-                    // Schreibe Auswahl persistent (LOCK_EX), prüfe Ergebnis
+                    // Write selection persistently (LOCK_EX), check result
                     $writeResult = @file_put_contents($persistFile, $configFile, LOCK_EX);
                     if ($writeResult === false) {
                         $dir = dirname($persistFile);
@@ -152,38 +177,15 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base', 'safe-tec'], true))
                 $effectiveFile = $defaultFixtureMap[$deviceType];
             } else {
                 // No default mapping for this device -> return 401 with JSON body
-                http_response_code(401);
-                $errorObj = [
-                    'error' => 'no_default_mapping',
-                    'device' => $deviceType
-                ];
-                $errorJson = json_encode($errorObj, JSON_PRETTY_PRINT);
-                header_remove();
-                header('content-length: ' . strlen($errorJson), true);
-                echo $errorJson . "\r\n\r\n";
-                if (function_exists('fastcgi_finish_request')) {
-                    fastcgi_finish_request();
-                }
-                exit;
+                send_json_response(401, json_encode([
+                    'error'  => 'no_default_mapping',
+                    'device' => $deviceType,
+                ], JSON_PRETTY_PRINT));
             }
 
             // Return immediate JSON response about config change and stop processing
-            $responseObj = [
-                'setFILE' => $effectiveFile,
-                'setSAVED' => $savedOk === true,
-            ];
-            $responseJson = json_encode($responseObj, JSON_PRETTY_PRINT);
-
-            // Minimal headers to match emulator behavior
-            http_response_code(200);
-            header_remove();
-            header('X-Emulator-Config: ' . $effectiveFile, true);
-            header('content-length: ' . strlen($responseJson), true);
-            echo $responseJson . "\r\n\r\n";
-            if (function_exists('fastcgi_finish_request')) {
-                fastcgi_finish_request();
-            }
-            exit;
+            $responseJson = json_encode(['setFILE' => $effectiveFile, 'setSAVED' => $savedOk === true], JSON_PRETTY_PRINT);
+            send_json_response(200, $responseJson, ['X-Emulator-Config: ' . $effectiveFile]);
     } elseif ($persistFile && file_exists($persistFile)) {
         $saved = trim(file_get_contents($persistFile));
         $savedBasename = basename($saved);
@@ -198,7 +200,7 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base', 'safe-tec'], true))
 // Ensure main SET operations logfile is inside logs/
 $logFile = $logsDir . '/set_operations.log';
 
-// Initialize device emulator, übergebe ggf. configFile
+// Initialize device emulator, passing configFile if set
 $emulator = new DeviceEmulator($deviceType, $logFile, $configFile);
 
 // Enforce casing rules: the command segment MUST be exactly `set` or `get` (lowercase).
@@ -207,36 +209,18 @@ $parts = explode('/', $path);
 if (isset($parts[1])) {
     $cmdRaw = $parts[1];
     if ($cmdRaw !== 'set' && $cmdRaw !== 'get') {
-        http_response_code(404);
-        header_remove();
-        header('content-length: 0', true);
-        if (function_exists('fastcgi_finish_request')) {
-            fastcgi_finish_request();
-        }
-        exit;
+        send_empty_response(404);
     }
     // Enforce that the key segment (third segment) is lowercase, except ADM which must be uppercase
     if (isset($parts[2])) {
         $keyRaw = $parts[2];
         if (strtolower($keyRaw) === 'adm') {
             if ($keyRaw !== 'ADM') {
-                http_response_code(404);
-                header_remove();
-                header('content-length: 0', true);
-                if (function_exists('fastcgi_finish_request')) {
-                    fastcgi_finish_request();
-                }
-                exit;
+                send_empty_response(404);
             }
         } else {
             if ($keyRaw !== strtolower($keyRaw)) {
-                http_response_code(404);
-                header_remove();
-                header('content-length: 0', true);
-                if (function_exists('fastcgi_finish_request')) {
-                    fastcgi_finish_request();
-                }
-                exit;
+                send_empty_response(404);
             }
         }
     }
@@ -259,13 +243,6 @@ if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
     $value = $matches[2];
     $emulator->handleSet($key, $value);
 } else {
-    // Unknown endpoint
-    http_response_code(404);
-    header_remove();
-    // Return an empty 404 body for unknown commands (no JSON)
-    header('content-length: 0', true);
-    // send no body
-    if (function_exists('fastcgi_finish_request')) {
-        fastcgi_finish_request();
-    }
+    // Unknown endpoint — return empty 404
+    send_empty_response(404);
 }
