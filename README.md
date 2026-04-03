@@ -465,15 +465,15 @@ curl "http://localhost:5333/neosoft/get/all?config=sanibel_softwater_uno.json"
 **Trio Examples:**
 
 ```bash
-# Activate safetechplus.json (Trio) - Default
+# Activate trio.json (Trio) - Default
 curl "http://localhost:5333/trio/get/all?config=default"
-curl "http://localhost:5333/trio/get/all?config=safetechplus.json"
+curl "http://localhost:5333/trio/get/all?config=trio.json"
 
 # Activate safetech.json (Trio)
 curl "http://localhost:5333/trio/get/all?config=safetech.json"
 
-# Activate trio.json (Trio)
-curl "http://localhost:5333/trio/get/all?config=trio.json"
+# Activate safetechplus.json (Trio)
+curl "http://localhost:5333/trio/get/all?config=safetechplus.json"
 
 # Activate Sanibel Leak protection module A25 (Trio)
 curl "http://localhost:5333/trio/get/all?config=sanibel_leakprotection.json"

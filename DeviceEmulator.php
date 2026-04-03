@@ -42,7 +42,7 @@ class DeviceEmulator
             'neosoft' => __DIR__ . '/devices/neosoft2500.json',
             'pontos-base' => __DIR__ . '/devices/pontos.json',
             'safe-tec' => __DIR__ . '/devices/safetech_v4_copy.json',
-            'trio' => __DIR__ . '/devices/safetechplus.json',
+            'trio' => __DIR__ . '/devices/trio.json',
         ];
 
         // If a config file was provided, accept any existing JSON fixture in devices/
