@@ -332,18 +332,25 @@ class DeviceEmulator
         // Special behavior: changes to AB should modify VLV with a delayed transition
         // If AB changed from false->true: set getVLV = 11 now, schedule ->10 after 30s
         // If AB changed from true->false: set getVLV = 21 now, schedule ->20 after 30s
+        //
+        // AB may be stored as a JSON boolean (false/true) or as a string ("0"/"1") depending
+        // on the fixture. Normalize both values to PHP booleans before comparing so the
+        // transition logic fires correctly for all safe-tec and neosoft fixtures.
         if ($getKey === 'getAB') {
             $vlvKey = 'getVLV';
             $now = time();
             $transitions = $persisted['__transitions'] ?? [];
 
-            if ($oldValue === false && $newValue === true) {
+            $wasOpen = filter_var($oldValue, FILTER_VALIDATE_BOOLEAN);
+            $isOpen  = filter_var($newValue,  FILTER_VALIDATE_BOOLEAN);
+
+            if (!$wasOpen && $isOpen) {
                 // immediate
                 $this->deviceData[$vlvKey] = 11;
                 $persisted[$vlvKey] = 11;
                 // schedule final value 10
                 $transitions[$vlvKey] = ['time' => $now + 30, 'final' => 10];
-            } elseif ($oldValue === true && $newValue === false) {
+            } elseif ($wasOpen && !$isOpen) {
                 $this->deviceData[$vlvKey] = 21;
                 $persisted[$vlvKey] = 21;
                 $transitions[$vlvKey] = ['time' => $now + 30, 'final' => 20];
