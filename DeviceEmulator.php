@@ -252,6 +252,21 @@ class DeviceEmulator
                 }
             }
         }
+        // Normalize AB to the fixture's native encoding.
+        // The URL value may arrive as "true"/"false"/"1"/"2" regardless of what the fixture uses.
+        // convertValue() preserves the type of $oldValue (bool or string) but cannot map
+        // "true" -> "1" or "false" -> "2" for string-encoded fixtures. isAbOpen() resolves
+        // the incoming value and re-encodes it in the fixture's format.
+        if ($upperKey === 'AB') {
+            $isOpen = $this->isAbOpen($newValue);
+            if (is_bool($oldValue)) {
+                // Boolean fixture (safetechplus, trio): true = closed, false = open
+                $newValue = !$isOpen;
+            } elseif (is_string($oldValue) && in_array($oldValue, ['1', '2'], true)) {
+                // String 1/2 fixture (safetech_v4): store as "1" or "2"
+                $newValue = $isOpen ? '1' : '2';
+            }
+        }
         // Special case: for ALA, WRN, NOT a numeric 255 should be stored as hex "FF"
         if (in_array($upperKey, ['ALA', 'WRN', 'NOT'], true)) {
             // If the incoming raw value or converted value represents 255, convert to hex
@@ -330,30 +345,38 @@ class DeviceEmulator
         }
 
         // Special behavior: changes to AB should modify VLV with a delayed transition
-        // If AB changed from false->true: set getVLV = 11 now, schedule ->10 after 30s
-        // If AB changed from true->false: set getVLV = 21 now, schedule ->20 after 30s
+        // Opening (closed -> open): set getVLV = 21 immediately, schedule -> 20 after 30s
+        // Closing (open -> closed): set getVLV = 11 immediately, schedule -> 10 after 30s
         //
-        // AB may be stored as a JSON boolean (false/true) or as a string ("0"/"1") depending
-        // on the fixture. Normalize both values to PHP booleans before comparing so the
-        // transition logic fires correctly for all safe-tec and neosoft fixtures.
+        // AB can be stored/sent in multiple formats depending on firmware version:
+        //   - true = closed, false = open  (JSON boolean, e.g. trio/safetech/safetechplus)
+        //   - 1 = open, 2 = closed         (string, e.g. safetech_v4)
+        // isAbOpen() handles all documented variants explicitly.
         if ($getKey === 'getAB') {
             $vlvKey = 'getVLV';
             $now = time();
             $transitions = $persisted['__transitions'] ?? [];
 
-            $wasOpen = filter_var($oldValue, FILTER_VALIDATE_BOOLEAN);
-            $isOpen  = filter_var($newValue,  FILTER_VALIDATE_BOOLEAN);
+            $wasOpen = $this->isAbOpen($oldValue);
+            $isOpen  = $this->isAbOpen($newValue);
 
             if (!$wasOpen && $isOpen) {
-                // immediate
-                $this->deviceData[$vlvKey] = 11;
-                $persisted[$vlvKey] = 11;
-                // schedule final value 10
-                $transitions[$vlvKey] = ['time' => $now + 30, 'final' => 10];
+                // Opening (closed → open): VLV in-progress=21, fully open=20
+                // Applies to both fixture types; only the PHP type differs.
+                $isStringVlv  = is_string($this->deviceData[$vlvKey] ?? null);
+                $immediateVlv = $isStringVlv ? '21' : 21;
+                $finalVlv     = $isStringVlv ? '20' : 20;
+                $this->deviceData[$vlvKey] = $immediateVlv;
+                $persisted[$vlvKey]        = $immediateVlv;
+                $transitions[$vlvKey] = ['time' => $now + 30, 'final' => $finalVlv];
             } elseif ($wasOpen && !$isOpen) {
-                $this->deviceData[$vlvKey] = 21;
-                $persisted[$vlvKey] = 21;
-                $transitions[$vlvKey] = ['time' => $now + 30, 'final' => 20];
+                // Closing (open → closed): VLV in-progress=11, fully closed=10
+                $isStringVlv  = is_string($this->deviceData[$vlvKey] ?? null);
+                $immediateVlv = $isStringVlv ? '11' : 11;
+                $finalVlv     = $isStringVlv ? '10' : 10;
+                $this->deviceData[$vlvKey] = $immediateVlv;
+                $persisted[$vlvKey]        = $immediateVlv;
+                $transitions[$vlvKey] = ['time' => $now + 30, 'final' => $finalVlv];
             }
 
             if (!empty($transitions)) {
@@ -446,6 +469,35 @@ class DeviceEmulator
 
         // Default: return as string
         return $value;
+    }
+
+    /**
+     * Interpret the AB (valve open/close) value as a boolean.
+     *
+     * AB encodings across SYR firmware versions:
+     *   true / false          — JSON boolean (neosoft, safetechplus): true = CLOSED, false = OPEN
+     *   "1" / "2" or 1 / 2   — open / closed (safetech_v4, safe-tec; cast to string before comparison)
+     *
+     * Returns true when the valve is open, false when closed.
+     */
+    private function isAbOpen(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            // true = closed, false = open
+            return !$value;
+        }
+        $v = (string) $value;
+        // Explicit closed states: "true" (string), "2" (safetech_v4 / safe-tec integer)
+        if (in_array($v, ['true', '2'], true)) {
+            return false;
+        }
+        // Explicit open states: "false" (string), "1" (safetech_v4 / safe-tec integer)
+        if (in_array($v, ['false', '1'], true)) {
+            return true;
+        }
+        // Unknown value — default to closed (safe fallback)
+        $this->writeInternalLog(sprintf('isAbOpen: unrecognized AB value "%s", treating as closed', $v));
+        return false;
     }
 
     /**
@@ -638,8 +690,9 @@ class DeviceEmulator
 
         // Launch detached depending on OS
         if (PHP_OS_FAMILY === 'Windows') {
-            // start /B php script args
-            $cmd = 'start /B ' . $cmd;
+            // 'start /B "cmd"' would treat the first quoted string as the window title.
+            // An explicit empty title "" forces Windows to treat the next argument as the executable.
+            $cmd = 'start "" /B ' . $cmd;
             pclose(popen($cmd, 'r'));
             return true;
         } else {
