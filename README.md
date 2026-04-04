@@ -53,7 +53,7 @@ A PHP-based emulator for SYR water treatment devices (Neosoft, Trio) for testing
    ```bash
    cd /var/www/html/syr-emulator
    chmod 755 .
-    chmod 666 logs/set_operations.log  # Or create the file on first SET
+   chmod 666 logs/set_operations.log  # Or create the file on first SET
    ```
 
 4. **Apache Virtual Host configuration (recommended for port 5333):**
