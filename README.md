@@ -117,11 +117,8 @@ A PHP-based emulator for SYR water treatment devices (Neosoft, Trio) for testing
 6. **Verify header configuration (optional):**
 
    ```bash
-   # Windows
-   curl -I http://localhost:5333/neosoft/set/ADM/(2)f
-   
-   # Linux/macOS
-   curl -I http://localhost:5333/neosoft/set/ADM/(2)f
+   curl -I http://localhost:5333/pontos-base/set/ADM/(2)f
+   curl -I http://localhost:5333/safe-tec/set/ADM/(2)f
    ```
 
 ## Quick Test
@@ -189,8 +186,9 @@ tests/test_validation.sh          # Linux/macOS
 
 Devices are automatically selected via URL prefix:
 
-- `/pontos-base/*` → Hansgrohe Pontos Base
 - `/neosoft/*` → Syr Neosoft 2500
+- `/pontos-base/*` → Hansgrohe Pontos Base
+- `/safe-tec/*` → Syr SafeTech v4
 - `/trio/*` → Syr Trio DFR LS
 
 ### API Endpoints
@@ -208,8 +206,8 @@ Examples:
 # Neosoft (neosoft fixtures do NOT support ADM -> return 404)
 curl -I "http://localhost:5333/neosoft/set/ADM/(2)f"
 
-# Trio (safetech_v4* supports ADM and returns 200)
-curl -I "http://localhost:5333/trio/set/ADM/(2)f"
+# SafeTech (safetech_v4* supports ADM and returns 200)
+curl -I "http://localhost:5333/safe-tec/set/ADM/(2)f"
 ```
 
 Success response (when supported):
@@ -235,6 +233,10 @@ curl -X GET "http://localhost:5333/pontos-base/get/all"
 # Neosoft
 curl -X GET "http://localhost:5333/neosoft/get/all"
 
+# SafeTech v4
+curl -X GET "http://localhost:5333/safe-tec/set/ADM/(2)f"
+curl -X GET "http://localhost:5333/safe-tec/get/all"
+
 # Trio
 curl -X GET "http://localhost:5333/trio/get/all"
 ```
@@ -254,14 +256,14 @@ Response:
 #### 3. Get Single Value (GET)
 
 ```bash
-# Get specific value (e.g., valve state)
-curl -X GET "http://localhost:5333/neosoft/get/ab"
-
 # Get flow rate
 curl -X GET "http://localhost:5333/neosoft/get/flo"
 
 # Get salt amount
 curl -X GET "http://localhost:5333/neosoft/get/sv1"
+
+# Get specific value (e.g., valve state)
+curl -X GET "http://localhost:5333/trio/get/ab"
 ```
 
 **Success response (key exists):**
@@ -269,6 +271,12 @@ curl -X GET "http://localhost:5333/neosoft/get/sv1"
 ```json
 {
     "getAB": false
+}
+```
+
+```json
+{
+    "getAB": 2
 }
 ```
 
@@ -282,23 +290,25 @@ curl -X GET "http://localhost:5333/neosoft/get/sv1"
 
 > **NSC** = "Not a valid command" - The requested key doesn't exist in the device data.
 
+> **BUG:** This does not work with Trio devices as documented in SYR API documentation. Requests to invalid commands return 404 http status code. Neosoft 2500 devices respond as documented with "NSC". This Emulator does properly in hope this changes with a future firmware update.
+
 #### 4. Set Value (SET)
 
 ```bash
-# Close valve (Neosoft)
-curl -X GET "http://localhost:5333/neosoft/set/ab/true"
-
 # Change regeneration time (Neosoft)
 curl -X GET "http://localhost:5333/neosoft/set/rtm/03:30"
 
 # Set salt amount (Neosoft)
 curl -X GET "http://localhost:5333/neosoft/set/sv1/25"
 
+# Close valve (Trio)
+curl -X GET "http://localhost:5333/trio/set/ab/true"
+
 # Switch profile (Trio)
 curl -X GET "http://localhost:5333/trio/set/prf/2"
 ```
 
-> **Note:** Values are passed through as-is and are **not** URL-decoded by the emulator. Send the raw value directly in the URL path.
+> **Note:** Values are passed through as-is and are **not** URL-encoded as the devices do not handle this properly. Send the raw value directly in the URL path.
 
 **Response format:**
 
@@ -315,6 +325,14 @@ The response key is generated from the path: `set` + `{key}` + `{value}` (slashe
 }
 ```
 
+**BUG:** Neosoft devices return JSON not as documented in SYR API documentation:
+
+```json
+{
+    "setsir0": "OK"
+}
+```
+
 **Validation error response (value outside valid range):**
 
 ```json
@@ -322,6 +340,9 @@ The response key is generated from the path: `set` + `{key}` + `{value}` (slashe
     "setRPD5": "MIMA"
 }
 ```
+
+> **BUG:** All devices allow you to set outside of range "RPD" values. Validation is currently broken. It works for other values properly.
+
 
 **Validation rules:**
 
@@ -359,10 +380,10 @@ This emulator is designed to work with the **local JSON API client** (`api_json.
    from custom_components.syr_connect.api_json import SyrConnectJsonAPI
    
    async with aiohttp.ClientSession() as session:
-       # Neosoft device
+       # SafeTech device
        client = SyrConnectJsonAPI(
            session=session,
-           base_url="http://localhost:5333/neosoft/"
+           base_url="http://localhost:5333/safe-tec/"
        )
        
        # Login
@@ -373,12 +394,12 @@ This emulator is designed to work with the **local JSON API client** (`api_json.
        print(data)
        
        # Set value
-       await client.set_device_status("test_device", "setAB", "true")
+       await client.set_device_status("test_device", "setAB", 2)
        
-       # Test Trio device
+       # Test SafeTech device
        client_trio = SyrConnectJsonAPI(
            session=session,
-           base_url="http://localhost:5333/trio/"
+           base_url="http://localhost:5333/safe-tec/"
        )
        trio_data = await client_trio.get_device_status("test_trio")
    ```
@@ -388,9 +409,9 @@ This emulator is designed to work with the **local JSON API client** (`api_json.
 All SET operations are logged to `logs/set_operations.log`:
 
 ```log
-[2026-03-06 15:30:45] SET | Device: neosoft | Client: 192.168.1.100 | Key: AB | Value: true | Changed getAB from false to true | User-Agent: python-aiohttp/3.9.1
-[2026-03-06 15:31:12] SET | Device: neosoft | Client: 192.168.1.100 | Key: RTM | Value: 03:30 | Changed getRTM from "02:00" to "03:30" | User-Agent: python-aiohttp/3.9.1
-[2026-03-06 15:35:20] LOGIN | Device: neosoft | Client: 192.168.1.100 | Key: ADM | Value: (2)f |  | User-Agent: Mozilla/5.0
+[2026-03-06 15:30:45] SET | Device: trio | Client: 192.168.1.100 | Key: ab | Value: true | Changed getAB from false to true | User-Agent: python-aiohttp/3.9.1
+[2026-03-06 15:31:12] SET | Device: neosoft | Client: 192.168.1.100 | Key: rtm | Value: 03:30 | Changed getRTM from "02:00" to "03:30" | User-Agent: python-aiohttp/3.9.1
+[2026-03-06 15:35:20] LOGIN | Device: safe-tec | Client: 192.168.1.100 | Key: ADM | Value: (2)f |  | User-Agent: Mozilla/5.0
 ```
 
 ### View Logfile
@@ -413,13 +434,13 @@ tail -f logs/set_operations.log
 1. Set a value:
 
 ```bash
-curl -i "http://localhost:5333/neosoft/set/ab/true"
+curl -i "http://localhost:5333/trio/set/ab/true"
 ```
 
 2. Confirm persisted value is returned by GET all:
 
 ```bash
-curl -i "http://localhost:5333/neosoft/get/all"
+curl -i "http://localhost:5333/trio/get/all"
 # Check that "getAB": true appears in the JSON body
 ```
 
@@ -511,6 +532,7 @@ Device data is stored in JSON files under `devices/`:
 
 - `devices/pontos.json` - Pontos Base
 - `devices/neosoft2500.json` - Neosoft 2500
+- `devices/safetech_v4_copy.json` - SafeTech v4
 - `devices/trio.json` - Trio DFR/LS
 
 You can edit these files to simulate different values:
@@ -542,7 +564,7 @@ After changes: No restarts necessary, changes are loaded immediately.
 
 ```bash
 # Check current headers
-curl -I http://localhost:5333/neosoft/set/ADM/(2)f
+curl -I http://localhost:5333/safe-tec/set/ADM/(2)f
 ```
 
 ```bash
@@ -627,6 +649,7 @@ ls -la devices/
    $fixtureMap = [
        'neosoft' => __DIR__ . '/devices/neosoft2500.json',
        'pontos-base' => __DIR__ . '/devices/pontos.json',
+       'safe-tec' => 'safetech_v4_copy.json',
        'trio' => __DIR__ . '/devices/trio.json',
        'new_device' => __DIR__ . '/devices/new_device.json',  // NEW
    ];
@@ -635,13 +658,13 @@ ls -la devices/
 3. Adjust regex in `index.php`:
 
    ```php
-   if (preg_match('#^(neosoft|pontos-base|trio|new_device)/#', $path, $matches)) {
+   if (preg_match('#^(neosoft|pontos-base|safe-tec|trio|new_device)/#', $path, $matches)) {
    ```
 
 4. Extend RewriteRule in `.htaccess`:
 
    ```apache
-   RewriteRule ^(neosoft|pontos-base|trio|new_device)/(.*)$ index.php [QSA,L]
+   RewriteRule ^(neosoft|pontos-base|safe-tec|trio|new_device)/(.*)$ index.php [QSA,L]
    ```
 
 5. Test:

@@ -118,8 +118,8 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base', 'safe-tec'], true))
     $defaultFixtureMap = [
         'neosoft' => 'neosoft2500.json',
         'pontos-base' => 'pontos.json',
-        'trio' => 'safetechplus.json',
         'safe-tec' => 'safetech_v4_copy.json',
+        'trio' => 'safetechplus.json',
     ];
 
     // Accept any existing JSON fixture in the devices folder. Use basename()
