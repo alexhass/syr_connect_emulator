@@ -421,6 +421,7 @@ All SET operations are logged to `logs/set_operations.log`:
 tail -f logs/set_operations.log
 
 # Last 20 entries
+```
 
 ## Persisted Runtime State
 
