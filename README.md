@@ -290,7 +290,7 @@ curl -X GET "http://localhost:5333/trio/get/ab"
 
 > **NSC** = "Not a valid command" - The requested key doesn't exist in the device data.
 
-> **BUG:** This does not work with Trio devices as documented in SYR API documentation. Requests to invalid commands return 404 http status code. Neosoft 2500 devices respond as documented with "NSC". This Emulator does properly in hope this changes with a future firmware update.
+> **BUG:** This does not work with Trio devices as documented in SYR API documentation. Requests to invalid commands return 404 http status code. Neosoft 2500 devices respond as documented with "NSC". This Emulator does as documented - in hope this changes with a future firmware update.
 
 #### 4. Set Value (SET)
 
@@ -308,7 +308,7 @@ curl -X GET "http://localhost:5333/trio/set/ab/true"
 curl -X GET "http://localhost:5333/trio/set/prf/2"
 ```
 
-> **Note:** Values are passed through as-is and are **not** URL-encoded as the devices do not handle this properly. Send the raw value directly in the URL path.
+> **Note:** Values are passed through as-is and must **not** URL-encoded as the devices do not handle this properly. Send the raw value directly in the URL path.
 
 **Response format:**
 
