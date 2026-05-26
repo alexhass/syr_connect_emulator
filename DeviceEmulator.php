@@ -117,8 +117,9 @@ class DeviceEmulator
         // Log the login attempt
         $this->logOperation('LOGIN', 'ADM', '(2)f');
 
+        // Pontos-Base und SafeTech V4 devices:
         // Return success - match real device response exactly
-        $response = json_encode(['setADM(2)f' => 'OK'], self::JSON_FLAGS);
+        $response = json_encode(['setADM(2)f' => 'FACTORY'], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
 

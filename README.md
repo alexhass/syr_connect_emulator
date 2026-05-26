@@ -197,7 +197,7 @@ Devices are automatically selected via URL prefix:
 
 The emulator exposes the legacy ADM login endpoint used by some device firmwares. Behavior depends on the selected JSON fixture:
 
-- For Trio fixtures whose filename starts with `safetech_v4` and for `pontos.json` the ADM endpoint exists and returns HTTP 200 with the JSON body `{"setADM(2)f":"OK"}`.
+- For fixtures whose filename starts with `safetech_v4` and for `pontos.json` the ADM endpoint exists and returns HTTP 200 with the JSON body `{"setADM(2)f":"FACTORY"}`.
 - For other fixtures the ADM endpoint is not present and the emulator returns HTTP 404 with a plain `File Not Found` body (to match real device behavior).
 
 Examples:
@@ -213,7 +213,7 @@ curl -I "http://localhost:5333/safe-tec/set/ADM/(2)f"
 Success response (when supported):
 
 ```json
-{"setADM(2)f": "OK"}
+{"setADM(2)f": "FACTORY"}
 ```
 
 Not supported / missing ADM response:
