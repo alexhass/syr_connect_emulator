@@ -124,6 +124,49 @@ class DeviceEmulator
     }
 
     /**
+     * Handle ADM (1)f — return SERVICE for supported fixtures
+     */
+    public function handleAdmOne(): void
+    {
+        $fixtureName = basename($this->fixturePath);
+        if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
+            http_response_code(404);
+            header_remove();
+            header('content-length: 0', true);
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+            return;
+        }
+
+        $this->isLoggedIn = true;
+        $this->logOperation('LOGIN', 'ADM', '(1)f');
+        $response = json_encode(['setADM(1)f' => 'SERVICE'], self::JSON_FLAGS);
+        $this->sendRawResponse($response);
+    }
+
+    /**
+     * Handle ADM (0)f — return ERROR: NSC for supported fixtures
+     */
+    public function handleAdmZero(): void
+    {
+        $fixtureName = basename($this->fixturePath);
+        if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
+            http_response_code(404);
+            header_remove();
+            header('content-length: 0', true);
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+            return;
+        }
+
+        $this->logOperation('LOGIN', 'ADM', '(0)f');
+        $response = json_encode(['setADM(0)f' => 'ERROR: NSC'], self::JSON_FLAGS);
+        $this->sendRawResponse($response);
+    }
+
+    /**
      * Handle clear admin endpoint
      *
      * Endpoint: /api/clr/ADM

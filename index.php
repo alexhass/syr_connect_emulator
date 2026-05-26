@@ -229,8 +229,14 @@ if (isset($parts[1])) {
 
 // Route the request
 if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
-    // Login endpoint
+    // Login endpoint ADM (2f) -> FACTORY (login successful)
     $emulator->handleLogin();
+} elseif (preg_match('#^[^/]+/set/ADM/\(1\)f$#', $path)) {
+    // ADM (1)f -> SERVICE
+    $emulator->handleAdmOne();
+} elseif (preg_match('#^[^/]+/set/ADM/\(0\)f$#', $path)) {
+    // ADM (0)f -> ERROR: NSC
+    $emulator->handleAdmZero();
 } elseif (preg_match('#^[^/]+/clr/ADM$#', $path)) {
     // Clear admin/login endpoint
     $emulator->handleClearAdmin();
