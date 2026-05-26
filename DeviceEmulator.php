@@ -124,6 +124,43 @@ class DeviceEmulator
     }
 
     /**
+     * Handle clear admin endpoint
+     *
+     * Endpoint: /api/clr/ADM
+     * Returns {"clrADM":"ADMIN RESET"} and clears login state
+     */
+    public function handleClearAdmin(): void
+    {
+        $fixtureName = basename($this->fixturePath);
+        if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
+            // Emulate device behavior: return an empty 404 for unsupported commands
+            http_response_code(404);
+            header_remove();
+            header('content-length: 0', true);
+            if (function_exists('fastcgi_finish_request')) {
+                fastcgi_finish_request();
+            }
+            return;
+        }
+
+        // Clear in-memory login state
+        $this->isLoggedIn = false;
+
+        // Also remove any persisted login marker if present
+        $persisted = $this->loadPersistedState();
+        if (is_array($persisted) && isset($persisted['__adm_logged_in'])) {
+            unset($persisted['__adm_logged_in']);
+            $this->savePersistedState($persisted);
+        }
+
+        // Log the reset
+        $this->logOperation('CLR', 'ADM', '', 'ADMIN RESET');
+
+        $response = json_encode(['clrADM' => 'ADMIN RESET'], self::JSON_FLAGS);
+        $this->sendRawResponse($response);
+    }
+
+    /**
      * Handle GET all values
      * 
      * Endpoint: /api/get/all

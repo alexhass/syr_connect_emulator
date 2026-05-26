@@ -204,12 +204,12 @@ $logFile = $logsDir . '/set_operations.log';
 // Initialize device emulator, passing configFile if set
 $emulator = new DeviceEmulator($deviceType, $logFile, $configFile);
 
-// Enforce casing rules: the command segment MUST be exactly `set` or `get` (lowercase).
+// Enforce casing rules: the command segment MUST be exactly `set`, `get` or `clr` (lowercase).
 // Any deviation results in an empty 404 response.
 $parts = explode('/', $path);
 if (isset($parts[1])) {
     $cmdRaw = $parts[1];
-    if ($cmdRaw !== 'set' && $cmdRaw !== 'get') {
+    if ($cmdRaw !== 'set' && $cmdRaw !== 'get' && $cmdRaw !== 'clr') {
         send_empty_response(404);
     }
     // Enforce that the key segment (third segment) is lowercase, except ADM which must be uppercase
@@ -231,6 +231,9 @@ if (isset($parts[1])) {
 if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
     // Login endpoint
     $emulator->handleLogin();
+} elseif (preg_match('#^[^/]+/clr/ADM$#', $path)) {
+    // Clear admin/login endpoint
+    $emulator->handleClearAdmin();
 } elseif (preg_match('#^[^/]+/get/all$#', $path)) {
     // Get all values
     $emulator->handleGetAll();
