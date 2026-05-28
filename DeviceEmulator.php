@@ -115,7 +115,7 @@ class DeviceEmulator
         $this->isLoggedIn = true;
 
         // Log the login attempt
-        $this->logOperation('LOGIN', 'ADM', '(2)f');
+        $this->logOperation('LOGIN', 'ADM', '(2)f', 'FACTORY');
 
         // Pontos-Base und SafeTech V4 devices:
         // Return success - match real device response exactly
