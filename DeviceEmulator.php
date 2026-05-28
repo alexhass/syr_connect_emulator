@@ -77,6 +77,13 @@ class DeviceEmulator
         // Merge any persisted runtime state (SET operations) so GET returns the updated values.
         $persisted = $this->loadPersistedState();
         if (!empty($persisted) && is_array($persisted)) {
+            // If a persisted login marker exists, restore in-memory login state
+            // but do NOT merge the marker into deviceData.
+            if (isset($persisted['__adm_logged_in'])) {
+                $this->isLoggedIn = (bool)$persisted['__adm_logged_in'];
+                unset($persisted['__adm_logged_in']);
+            }
+
             // Apply any pending transitions first (this may update deviceData and persisted)
             $this->applyPendingTransitions($persisted);
 
@@ -114,6 +121,14 @@ class DeviceEmulator
 
         $this->isLoggedIn = true;
 
+        // Persist login marker so subsequent requests see the logged-in state
+        $persisted = $this->loadPersistedState();
+        if (!is_array($persisted)) {
+            $persisted = [];
+        }
+        $persisted['__adm_logged_in'] = true;
+        $this->savePersistedState($persisted);
+
         // Log the login attempt
         $this->logOperation('LOGIN', 'ADM', '(2)f', 'FACTORY');
 
@@ -140,6 +155,15 @@ class DeviceEmulator
         }
 
         $this->isLoggedIn = true;
+
+        // Persist login marker so subsequent requests see the logged-in state
+        $persisted = $this->loadPersistedState();
+        if (!is_array($persisted)) {
+            $persisted = [];
+        }
+        $persisted['__adm_logged_in'] = true;
+        $this->savePersistedState($persisted);
+
         $this->logOperation('LOGIN', 'ADM', '(1)f', 'SERVICE');
         $response = json_encode(['setADM(1)f' => 'SERVICE'], self::JSON_FLAGS);
         $this->sendRawResponse($response);
