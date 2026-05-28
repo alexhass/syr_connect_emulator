@@ -140,7 +140,7 @@ class DeviceEmulator
         }
 
         $this->isLoggedIn = true;
-        $this->logOperation('LOGIN', 'ADM', '(1)f');
+        $this->logOperation('LOGIN', 'ADM', '(1)f', 'SERVICE');
         $response = json_encode(['setADM(1)f' => 'SERVICE'], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
@@ -161,7 +161,7 @@ class DeviceEmulator
             return;
         }
 
-        $this->logOperation('LOGIN', 'ADM', '(0)f');
+        $this->logOperation('LOGIN', 'ADM', '(0)f', 'ERROR: NSC');
         $response = json_encode(['setADM(0)f' => 'ERROR: NSC'], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
