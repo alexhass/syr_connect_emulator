@@ -267,8 +267,6 @@ class DeviceEmulator
         if (!empty($merge)) {
             $this->deviceData = array_replace($this->deviceData, $merge);
         }
-        // Persist any changes made by applyPendingTransitions
-        $this->savePersistedState($persisted);
 
         # WARNING: The original SYR devices return JSON without pretty print.
         $response = json_encode($this->deviceData, self::JSON_FLAGS);
