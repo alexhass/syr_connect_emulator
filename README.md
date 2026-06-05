@@ -190,6 +190,7 @@ Devices are automatically selected via URL prefix:
 - `/pontos-base/*` → Hansgrohe Pontos Base
 - `/safe-tec/*` → Syr SafeTech v4
 - `/trio/*` → Syr Trio DFR LS
+- `/floorsensor/*` → Syr SafeFloor
 
 ### API Endpoints
 
@@ -198,6 +199,7 @@ Devices are automatically selected via URL prefix:
 The emulator exposes the legacy ADM login endpoint used by some device firmwares. Behavior depends on the selected JSON fixture:
 
 - For fixtures whose filename starts with `safetech_v4` and for `pontos.json` the ADM endpoint exists and returns HTTP 200 with the JSON body `{"setADM(2)f":"FACTORY"}`.
+- For `safefloor.json` (floorsensor) the ADM endpoint also exists and returns HTTP 200, but with the key **without** `set` prefix: `{"ADM(2)f":"FACTORY"}`.
 - For other fixtures the ADM endpoint is not present and the emulator returns HTTP 404 with a plain `File Not Found` body (to match real device behavior).
 
 Examples:
@@ -208,12 +210,21 @@ curl -I "http://localhost:5333/neosoft/set/ADM/(2)f"
 
 # SafeTech (safetech_v4* supports ADM and returns 200)
 curl -I "http://localhost:5333/safe-tec/set/ADM/(2)f"
+
+# SafeFloor (supports ADM and returns 200, different key format)
+curl -I "http://localhost:5333/floorsensor/set/ADM/(2)f"
 ```
 
-Success response (when supported):
+Success response (safetech_v4 / pontos):
 
 ```json
 {"setADM(2)f": "FACTORY"}
+```
+
+Success response (floorsensor):
+
+```json
+{"ADM(2)f": "FACTORY"}
 ```
 
 Not supported / missing ADM response:
@@ -518,6 +529,17 @@ curl "http://localhost:5333/safe-tec/get/all?config=safetech_v4.json"
 curl "http://localhost:5333/pontos-base/get/all?config=pontos.json"
 ```
 
+**Floorsensor Examples:**
+
+```bash
+# Activate SafeFloor - Default
+curl "http://localhost:5333/floorsensor/get/all?config=default"
+curl "http://localhost:5333/floorsensor/get/all?config=safefloor.json"
+
+# Activate Sanibel Leak Protection module A25
+curl "http://localhost:5333/floorsensor/get/all?config=sanibel_leakprotection.json"
+```
+
 After calling with ?config=... once, the selection will be used for all following requests (without parameter) until changed again.
 
 **Default:**
@@ -535,6 +557,7 @@ Device data is stored in JSON files under `devices/`:
 - `devices/neosoft2500.json` - Neosoft 2500
 - `devices/safetech_v4_copy.json` - SafeTech v4
 - `devices/trio.json` - Trio DFR/LS
+- `devices/safefloor.json` - SafeFloor
 
 You can edit these files to simulate different values:
 
@@ -659,13 +682,13 @@ ls -la devices/
 3. Adjust regex in `index.php`:
 
    ```php
-   if (preg_match('#^(neosoft|pontos-base|safe-tec|trio|new_device)/#', $path, $matches)) {
+   if (preg_match('#^(neosoft|pontos-base|safe-tec|trio|floorsensor|new_device)/#', $path, $matches)) {
    ```
 
 4. Extend RewriteRule in `.htaccess`:
 
    ```apache
-   RewriteRule ^(neosoft|pontos-base|safe-tec|trio|new_device)/(.*)$ index.php [QSA,L]
+   RewriteRule ^(neosoft|pontos-base|safe-tec|trio|floorsensor|new_device)/(.*)$ index.php [QSA,L]
    ```
 
 5. Test:

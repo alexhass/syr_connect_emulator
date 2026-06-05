@@ -90,13 +90,13 @@ if (isset($_GET['_dp']) && $_GET['_dp'] !== '') {
 
 // Extract device type from URL prefix
 $deviceType = null;
-if (preg_match('#^(neosoft|trio|pontos-base|safe-tec)/#', $path, $matches)) {
+if (preg_match('#^(neosoft|trio|pontos-base|safe-tec|floorsensor)/#', $path, $matches)) {
     $deviceType = $matches[1];
 } else {
     send_json_response(400, json_encode([
         'error'   => 'Invalid device prefix',
         'path'    => $path,
-        'message' => 'URL must start with /neosoft/, /trio/, /pontos-base/ or /safe-tec/',
+        'message' => 'URL must start with /neosoft/, /trio/, /pontos-base/, /safe-tec/ or /floorsensor/',
     ]));
 }
 
@@ -112,7 +112,7 @@ if (!is_dir($logsDir)) {
 if (!is_dir($configsDir)) {
     @mkdir($configsDir, 0777, true);
 }
-if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base', 'safe-tec'], true)) {
+if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base', 'safe-tec', 'floorsensor'], true)) {
     $persistFile = $configsDir . '/config_selection_' . $deviceType . '.txt';
     // Default fixture filenames (kept in sync with DeviceEmulator::$fixtureMap)
     $defaultFixtureMap = [
@@ -120,6 +120,7 @@ if (in_array($deviceType, ['trio', 'neosoft', 'pontos-base', 'safe-tec'], true))
         'pontos-base' => 'pontos.json',
         'safe-tec' => 'safetech_v4_copy.json',
         'trio' => 'safetechplus.json',
+        'floorsensor' => 'safefloor.json',
     ];
 
     // Accept any existing JSON fixture in the devices folder. Use basename()

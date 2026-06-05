@@ -46,6 +46,7 @@ class DeviceEmulator
             'pontos-base' => __DIR__ . '/devices/pontos.json',
             'safe-tec' => __DIR__ . '/devices/safetech_v4_copy.json',
             'trio' => __DIR__ . '/devices/trio.json',
+            'floorsensor' => __DIR__ . '/devices/safefloor.json',
         ];
 
         // If a config file was provided, accept any existing JSON fixture in devices/
@@ -108,7 +109,7 @@ class DeviceEmulator
         // For most safetech_v4* fixtures the ADM login exists and returns OK.
         // For all other device fixtures the ADM endpoint does not exist and should return 404 File Not Found.
         $fixtureName = basename($this->fixturePath);
-        if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
+        if (!preg_match('/^(safetech_v4|pontos|safefloor)/i', $fixtureName)) {
             // Emulate device behavior: return an empty 404 for unsupported commands
             http_response_code(404);
             header_remove();
@@ -132,9 +133,9 @@ class DeviceEmulator
         // Log the login attempt
         $this->logOperation('LOGIN', 'ADM', '(2)f', 'FACTORY');
 
-        // Pontos-Base und SafeTech V4 devices:
-        // Return success - match real device response exactly
-        $response = json_encode(['setADM(2)f' => 'FACTORY'], self::JSON_FLAGS);
+        // Floorsensor returns key without "set" prefix; all other supported devices use "setADM(2)f"
+        $admKey = $this->deviceType === 'floorsensor' ? 'ADM(2)f' : 'setADM(2)f';
+        $response = json_encode([$admKey => 'FACTORY'], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
 
@@ -144,7 +145,7 @@ class DeviceEmulator
     public function handleAdmOne(): void
     {
         $fixtureName = basename($this->fixturePath);
-        if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
+        if (!preg_match('/^(safetech_v4|pontos|safefloor)/i', $fixtureName)) {
             http_response_code(404);
             header_remove();
             header('content-length: 0', true);
@@ -165,7 +166,8 @@ class DeviceEmulator
         $this->savePersistedState($persisted);
 
         $this->logOperation('LOGIN', 'ADM', '(1)f', 'SERVICE');
-        $response = json_encode(['setADM(1)f' => 'SERVICE'], self::JSON_FLAGS);
+        $admKey = $this->deviceType === 'floorsensor' ? 'ADM(1)f' : 'setADM(1)f';
+        $response = json_encode([$admKey => 'SERVICE'], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
 
@@ -175,7 +177,7 @@ class DeviceEmulator
     public function handleAdmZero(): void
     {
         $fixtureName = basename($this->fixturePath);
-        if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
+        if (!preg_match('/^(safetech_v4|pontos|safefloor)/i', $fixtureName)) {
             http_response_code(404);
             header_remove();
             header('content-length: 0', true);
@@ -186,7 +188,8 @@ class DeviceEmulator
         }
 
         $this->logOperation('LOGIN', 'ADM', '(0)f', 'ERROR: NSC');
-        $response = json_encode(['setADM(0)f' => 'ERROR: NSC'], self::JSON_FLAGS);
+        $admKey = $this->deviceType === 'floorsensor' ? 'ADM(0)f' : 'setADM(0)f';
+        $response = json_encode([$admKey => 'ERROR: NSC'], self::JSON_FLAGS);
         $this->sendRawResponse($response);
     }
 
@@ -199,7 +202,7 @@ class DeviceEmulator
     public function handleClearAdmin(): void
     {
         $fixtureName = basename($this->fixturePath);
-        if (!preg_match('/^(safetech_v4|pontos)/i', $fixtureName)) {
+        if (!preg_match('/^(safetech_v4|pontos|safefloor)/i', $fixtureName)) {
             // Emulate device behavior: return an empty 404 for unsupported commands
             http_response_code(404);
             header_remove();
