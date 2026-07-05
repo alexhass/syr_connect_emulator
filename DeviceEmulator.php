@@ -289,6 +289,19 @@ class DeviceEmulator
         // Convert to get key format (e.g., 'AB' -> 'getAB')
         $getKey = 'get' . strtoupper($key);
 
+        // DEX is a virtual command: only available when getDSV is present
+        if (strtoupper($key) === 'DEX') {
+            if (!array_key_exists('getDSV', $this->deviceData)) {
+                $response = json_encode([$getKey => 'NSC'], self::JSON_FLAGS);
+                $this->sendRawResponse($response);
+                return;
+            }
+            // Return last value sent via SET DEX, default false
+            $response = json_encode([$getKey => false], self::JSON_FLAGS);
+            $this->sendRawResponse($response);
+            return;
+        }
+
         // Check if key exists in device data
         if (!array_key_exists($getKey, $this->deviceData)) {
             // Key not found - return NSC (Not a valid command)
@@ -316,6 +329,39 @@ class DeviceEmulator
     {
         // Convert set key to get key (e.g., 'AB' -> 'getAB', 'RTM' -> 'getRTM')
         $getKey = 'get' . strtoupper($key);
+
+        // DEX (micro leakage test trigger) is a virtual SET-only command.
+        // It exists only when getDSV is present in the device data.
+        if (strtoupper($key) === 'DEX') {
+            if (!array_key_exists('getDSV', $this->deviceData)) {
+                $this->logOperation('SET_ERROR', $key, $value, "DEX not available: getDSV not present");
+                $responseKey = 'set' . strtoupper($key) . $value;
+                $response = json_encode([$responseKey => 'NSC'], self::JSON_FLAGS);
+                $this->sendRawResponse($response);
+                return;
+            }
+            if (filter_var($value, FILTER_VALIDATE_BOOLEAN)) {
+                // Micro leakage test started: set getDSV=1 for 5 minutes, then reset to 0
+                $persisted = $this->loadPersistedState();
+                if (!is_array($persisted)) {
+                    $persisted = [];
+                }
+                $this->deviceData['getDSV'] = 1;
+                $persisted['getDSV'] = 1;
+                $transitions = $persisted['__transitions'] ?? [];
+                $transitions['getDSV'] = ['time' => time() + 300, 'final' => 0];
+                $persisted['__transitions'] = $transitions;
+                $this->savePersistedState($persisted);
+                $this->startTransitionWorker('getDSV', 300, 0);
+                $this->logOperation('SET', $key, $value, 'DEX triggered: getDSV=1 for 5min then 0');
+            } else {
+                $this->logOperation('SET', $key, $value, 'DEX accepted');
+            }
+            $responseKey = 'set' . strtoupper($key) . $value;
+            $response = json_encode([$responseKey => 'OK'], self::JSON_FLAGS);
+            $this->sendRawResponse($response);
+            return;
+        }
 
         // Check if key exists in device data
         if (!array_key_exists($getKey, $this->deviceData)) {
