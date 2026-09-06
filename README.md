@@ -510,6 +510,12 @@ curl "http://localhost:5333/trio/get/all?config=safetechplus.json"
 
 # Activate Sanibel Leak protection module A25 (Trio)
 curl "http://localhost:5333/trio/get/all?config=sanibel_leakprotection.json"
+
+# Activate Conel Clear Pro Fill (Trio)
+curl "http://localhost:5333/trio/get/all?config=conelclearprofill.json"
+
+# Activate Conel Clear Pro Soft (Trio)
+curl "http://localhost:5333/trio/get/all?config=conelclearprosoft.json"
 ```
 
 **Safe-Tech v4 Examples:**
@@ -555,8 +561,15 @@ Device data is stored in JSON files under `devices/`:
 
 - `devices/pontos.json` - Pontos Base
 - `devices/neosoft2500.json` - Neosoft 2500
+- `devices/sanibel_softwater_uno.json` - Sanibel Softwater UNO (Neosoft 2500)
 - `devices/safetech_v4_copy.json` - SafeTech v4
+- `devices/safetech_v4.json` - SafeTech v4 (older firmware)
 - `devices/trio.json` - Trio DFR/LS
+- `devices/safetech.json` - SafeTech (Trio)
+- `devices/safetechplus.json` - SafeTech Plus (Trio)
+- `devices/sanibel_leakprotection.json` - Sanibel Leak Protection module A25 (Trio/SafeFloor)
+- `devices/conelclearprofill.json` - Conel Clear Pro Fill (Trio)
+- `devices/conelclearprosoft.json` - Conel Clear Pro Soft (Trio)
 - `devices/safefloor.json` - SafeFloor
 
 You can edit these files to simulate different values:
