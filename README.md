@@ -498,40 +498,43 @@ curl "http://localhost:5333/neosoft/get/all?config=sanibel_softwater_uno.json"
 **Trio Examples:**
 
 ```bash
-# Activate trio.json (Trio) - Default
+# Activate trio.json (trio) - Default
 curl "http://localhost:5333/trio/get/all?config=default"
 curl "http://localhost:5333/trio/get/all?config=trio.json"
 
-# Activate safetech.json (Trio)
+# Activate safetech.json (trio)
 curl "http://localhost:5333/trio/get/all?config=safetech.json"
 
-# Activate safetechplus.json (Trio)
+# Activate safetechplus.json (trio)
 curl "http://localhost:5333/trio/get/all?config=safetechplus.json"
 
-# Activate Sanibel Leak protection module A25 (Trio)
+# Activate Sanibel Leak protection module A25 (trio)
 curl "http://localhost:5333/trio/get/all?config=sanibel_leakprotection.json"
 
-# Activate Conel Clear Pro Fill (Trio)
+# Activate Conel Clear Pro Fill (trio)
 curl "http://localhost:5333/trio/get/all?config=conelclearprofill.json"
 
-# Activate Conel Clear Pro Soft (Trio)
+# Activate Conel Clear Pro Soft (trio)
 curl "http://localhost:5333/trio/get/all?config=conelclearprosoft.json"
 ```
 
-**Safe-Tech v4 Examples:**
+**Safe-Tech Examples:**
 
 ```bash
-# Activate Safetech V4 (Trio) - Default
+# Activate Safetech V4 (safe-tec) - Default
 curl "http://localhost:5333/safe-tec/get/all?config=safetech_v4_copy.json"
 
-# Activate Safetech V4 older firmware (Trio)
+# Activate Safetech V4 older firmware (safe-tec)
 curl "http://localhost:5333/safe-tec/get/all?config=safetech_v4.json"
+
+# Activate Safetech V3 firmware (safe-tec)
+curl "http://localhost:5333/safe-tec/get/all?config=safetech_v3.json"
 ```
 
 **Pontos-Base Examples:**
 
 ```bash
-# Activate Safetech V4 (Trio) - Default
+# Activate Pontos-Base (pontos-base) - Default
 curl "http://localhost:5333/pontos-base/get/all?config=pontos.json"
 ```
 
@@ -562,6 +565,7 @@ Device data is stored in JSON files under `devices/`:
 - `devices/pontos.json` - Pontos Base
 - `devices/neosoft2500.json` - Neosoft 2500
 - `devices/sanibel_softwater_uno.json` - Sanibel Softwater UNO (Neosoft 2500)
+- `devices/safetech_v3.json` - SafeTech v3
 - `devices/safetech_v4_copy.json` - SafeTech v4
 - `devices/safetech_v4.json` - SafeTech v4 (older firmware)
 - `devices/trio.json` - Trio DFR/LS
