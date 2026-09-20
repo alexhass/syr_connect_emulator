@@ -248,6 +248,9 @@ if (preg_match('#^[^/]+/set/ADM/\(2\)f$#', $path)) {
     // Get single value
     $key = $matches[1];
     $emulator->handleGetSingle($key);
+} elseif (preg_match('#^[^/]+/set/upg$#i', $path)) {
+    // UPG (firmware upgrade trigger) arrives with an empty value
+    $emulator->handleSet('upg', '');
 } elseif (preg_match('#^[^/]+/set/([^/]+)/(.+)$#', $path, $matches)) {
     // Set operation
     $key = $matches[1];

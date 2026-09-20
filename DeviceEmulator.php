@@ -363,6 +363,23 @@ class DeviceEmulator
             return;
         }
 
+        // UPG (firmware upgrade trigger) is a virtual SET-only command that arrives
+        // with an empty value and does not store a getUPG value; it only raises getWRN=ff.
+        if (strtoupper($key) === 'UPG') {
+            $persisted = $this->loadPersistedState();
+            if (!is_array($persisted)) {
+                $persisted = [];
+            }
+            $this->deviceData['getNOT'] = 'ff';
+            $persisted['getNOT'] = 'ff';
+            $this->savePersistedState($persisted);
+            $this->logOperation('SET', $key, $value, 'UPG triggered: getNOT=ff');
+            $responseKey = 'set' . strtoupper($key) . $value;
+            $response = json_encode([$responseKey => 'OK'], self::JSON_FLAGS);
+            $this->sendRawResponse($response);
+            return;
+        }
+
         // Check if key exists in device data
         if (!array_key_exists($getKey, $this->deviceData)) {
             // Key not found - emulate real device behavior: return NSC (Not a valid command)
