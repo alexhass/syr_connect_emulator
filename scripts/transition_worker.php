@@ -28,7 +28,8 @@ if (!is_array($data)) {
     exit(1);
 }
 // Apply final value and remove transition
-$data[$key] = is_numeric($final) ? (int)$final : $final;
+// Keep strings with leading zeros (e.g. getNOT '04') intact
+$data[$key] = (is_numeric($final) && (string)(int)$final === $final) ? (int)$final : $final;
 if (isset($data['__transitions'][$key])) {
     unset($data['__transitions'][$key]);
 }

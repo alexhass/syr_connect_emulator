@@ -363,17 +363,25 @@ class DeviceEmulator
             return;
         }
 
-        // UPG (firmware upgrade trigger) is a virtual SET-only command that arrives
-        // with an empty value and does not store a getUPG value; it only raises getWRN=ff.
+        // UPG (software update trigger) is a virtual SET-only command with an empty value;
+        // no getUPG value is stored. If getNOT=01 (new software available), it switches to
+        // getNOT=04 (new software installed) after 3 minutes. Otherwise it has no effect.
         if (strtoupper($key) === 'UPG') {
             $persisted = $this->loadPersistedState();
             if (!is_array($persisted)) {
                 $persisted = [];
             }
-            $this->deviceData['getNOT'] = 'ff';
-            $persisted['getNOT'] = 'ff';
-            $this->savePersistedState($persisted);
-            $this->logOperation('SET', $key, $value, 'UPG triggered: getNOT=ff');
+            if (strtolower((string)($this->deviceData['getNOT'] ?? '')) === '01') {
+                // 01 (update available) -> 04 (update installed) after 3 minutes
+                $transitions = $persisted['__transitions'] ?? [];
+                $transitions['getNOT'] = ['time' => time() + 180, 'final' => '04'];
+                $persisted['__transitions'] = $transitions;
+                $this->savePersistedState($persisted);
+                $this->startTransitionWorker('getNOT', 180, '04');
+                $this->logOperation('SET', $key, $value, 'UPG triggered: getNOT=04 after 3min');
+            } else {
+                $this->logOperation('SET', $key, $value, 'UPG accepted (getNOT != 01, no change)');
+            }
             $responseKey = 'set' . strtoupper($key) . $value;
             $response = json_encode([$responseKey => 'OK'], self::JSON_FLAGS);
             $this->sendRawResponse($response);
