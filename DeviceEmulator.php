@@ -372,13 +372,13 @@ class DeviceEmulator
                 $persisted = [];
             }
             if (strtolower((string)($this->deviceData['getNOT'] ?? '')) === '01') {
-                // 01 (update available) -> 04 (update installed) after 3 minutes
+                // 01 (update available) -> 04 (update installed) after 90s
                 $transitions = $persisted['__transitions'] ?? [];
                 $transitions['getNOT'] = ['time' => time() + 90, 'final' => '04'];
                 $persisted['__transitions'] = $transitions;
                 $this->savePersistedState($persisted);
-                $this->startTransitionWorker('getNOT', 180, '04');
-                $this->logOperation('SET', $key, $value, 'UPG triggered: getNOT=04 after 3min');
+                $this->startTransitionWorker('getNOT', 90, '04');
+                $this->logOperation('SET', $key, $value, 'UPG triggered: getNOT=04 after 90s');
             } else {
                 $this->logOperation('SET', $key, $value, 'UPG accepted (getNOT != 01, no change)');
             }
