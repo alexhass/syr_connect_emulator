@@ -374,7 +374,7 @@ class DeviceEmulator
             if (strtolower((string)($this->deviceData['getNOT'] ?? '')) === '01') {
                 // 01 (update available) -> 04 (update installed) after 3 minutes
                 $transitions = $persisted['__transitions'] ?? [];
-                $transitions['getNOT'] = ['time' => time() + 180, 'final' => '04'];
+                $transitions['getNOT'] = ['time' => time() + 90, 'final' => '04'];
                 $persisted['__transitions'] = $transitions;
                 $this->savePersistedState($persisted);
                 $this->startTransitionWorker('getNOT', 180, '04');
